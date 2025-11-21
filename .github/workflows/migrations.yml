@@ -1,0 +1,59 @@
+name: Database Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'migrations/**'
+  workflow_dispatch:
+
+jobs:
+  run-migrations:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Extract connection details from DATABASE_URL
+          # Format: postgresql://user:password@host:port/database
+
+          # Parse DATABASE_URL (assumes Supabase format)
+          PGPASSWORD=$(echo $DATABASE_URL | sed -E 's|.*://[^:]+:([^@]+)@.*|\1|')
+          PGHOST=$(echo $DATABASE_URL | sed -E 's|.*@([^:]+):.*|\1|')
+          PGPORT=$(echo $DATABASE_URL | sed -E 's|.*:([0-9]+)/.*|\1|')
+          PGDATABASE=$(echo $DATABASE_URL | sed -E 's|.*/([^?]+).*|\1|')
+          PGUSER=$(echo $DATABASE_URL | sed -E 's|.*://([^:]+):.*|\1|')
+
+          export PGPASSWORD PGHOST PGPORT PGDATABASE PGUSER
+
+          # Run each migration in order
+          for file in migrations/*.sql; do
+            echo "Running migration: $file"
+            psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -f "$file"
+          done
+
+      - name: Verify migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          PGPASSWORD=$(echo $DATABASE_URL | sed -E 's|.*://[^:]+:([^@]+)@.*|\1|')
+          PGHOST=$(echo $DATABASE_URL | sed -E 's|.*@([^:]+):.*|\1|')
+          PGPORT=$(echo $DATABASE_URL | sed -E 's|.*:([0-9]+)/.*|\1|')
+          PGDATABASE=$(echo $DATABASE_URL | sed -E 's|.*/([^?]+).*|\1|')
+          PGUSER=$(echo $DATABASE_URL | sed -E 's|.*://([^:]+):.*|\1|')
+
+          export PGPASSWORD PGHOST PGPORT PGDATABASE PGUSER
+
+          echo "Verifying database tables..."
+          psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -c "\dt"
