@@ -52,7 +52,7 @@ export default async function BlogPage({
         <h1 className="text-4xl font-bold mb-8">Blog</h1>
 
         <div className="space-y-12">
-          {posts.map((post) => (
+          {posts.map((post: typeof posts[number]) => (
             <article key={post.id} className="pb-8 border-b">
               <Link
                 href={`/blog/${post.slug}`}
@@ -71,7 +71,7 @@ export default async function BlogPage({
                 <p className="text-gray-600 mb-4">{post.excerpt}</p>
               )}
               <div className="flex gap-2">
-                {post.tags.map((tag) => (
+                {post.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded"

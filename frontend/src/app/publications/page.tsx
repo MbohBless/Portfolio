@@ -10,7 +10,7 @@ export default async function PublicationsPage() {
   })
 
   // Group publications by year
-  const byYear = publications.reduce((acc, pub) => {
+  const byYear = publications.reduce((acc: Record<number, typeof publications>, pub: typeof publications[number]) => {
     if (!acc[pub.year]) acc[pub.year] = []
     acc[pub.year].push(pub)
     return acc
@@ -48,7 +48,7 @@ export default async function PublicationsPage() {
           <div key={year} className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-700">{year}</h2>
             <div className="space-y-8">
-              {byYear[year].map((pub) => (
+              {byYear[year].map((pub: typeof publications[number]) => (
                 <article key={pub.id} className="border-l-4 border-blue-500 pl-6">
                   <Link
                     href={`/publications/${pub.slug}`}
@@ -96,7 +96,7 @@ export default async function PublicationsPage() {
                   </div>
                   {pub.tags.length > 0 && (
                     <div className="flex gap-2 mt-3">
-                      {pub.tags.map((tag) => (
+                      {pub.tags.map((tag: string) => (
                         <span
                           key={tag}
                           className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded"

@@ -35,7 +35,7 @@ export default async function ProjectsPage() {
         <h1 className="text-4xl font-bold mb-8">Projects</h1>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((project) => (
+          {projects.map((project: typeof projects[number]) => (
             <Link
               key={project.id}
               href={`/projects/${project.slug}`}
@@ -57,7 +57,7 @@ export default async function ProjectsPage() {
                   {project.description}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {project.techStack.slice(0, 3).map((tech) => (
+                  {project.techStack.slice(0, 3).map((tech: string) => (
                     <span
                       key={tech}
                       className="px-2 py-1 bg-gray-100 rounded text-sm"

@@ -70,21 +70,21 @@ export async function GET(request: NextRequest) {
     ])
 
     const results = [
-      ...projects.map((p) => ({
+      ...projects.map((p: typeof projects[number]) => ({
         id: p.id,
         title: p.title,
         excerpt: p.description || '',
         type: 'project' as const,
         slug: p.slug,
       })),
-      ...publications.map((p) => ({
+      ...publications.map((p: typeof publications[number]) => ({
         id: p.id,
         title: p.title,
         excerpt: p.abstract ? p.abstract.substring(0, 200) : '',
         type: 'publication' as const,
         slug: p.slug,
       })),
-      ...blogPosts.map((p) => ({
+      ...blogPosts.map((p: typeof blogPosts[number]) => ({
         id: p.id,
         title: p.title,
         excerpt: p.excerpt || '',

@@ -69,7 +69,7 @@ export default async function ProjectPage({ params }: { params: { slug: string }
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Tech Stack</h2>
           <div className="flex flex-wrap gap-2">
-            {project.techStack.map((tech) => (
+            {project.techStack.map((tech: string) => (
               <span key={tech} className="px-3 py-1 bg-blue-100 text-blue-800 rounded">
                 {tech}
               </span>
@@ -81,7 +81,7 @@ export default async function ProjectPage({ params }: { params: { slug: string }
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Screenshots</h2>
             <div className="grid gap-4">
-              {project.images.map((image, i) => (
+              {project.images.map((image: string, i: number) => (
                 <img
                   key={i}
                   src={image}
