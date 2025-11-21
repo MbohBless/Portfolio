@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic' // Render on-demand, skip build-time pre-rendering
 
 export default async function BlogPage({
   searchParams,

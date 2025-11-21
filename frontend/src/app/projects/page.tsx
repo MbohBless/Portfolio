@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export const revalidate = 60 // Revalidate every 60 seconds
+export const dynamic = 'force-dynamic' // Render on-demand, skip build-time pre-rendering
 
 export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
