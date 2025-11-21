@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
@@ -82,12 +83,14 @@ export default async function ProjectPage({ params }: { params: { slug: string }
             <h2 className="text-2xl font-semibold">Screenshots</h2>
             <div className="grid gap-4">
               {project.images.map((image: string, i: number) => (
-                <img
-                  key={i}
-                  src={image}
-                  alt={`${project.title} screenshot ${i + 1}`}
-                  className="w-full rounded-lg border"
-                />
+                <div key={i} className="relative w-full h-96">
+                  <Image
+                    src={image}
+                    alt={`${project.title} screenshot ${i + 1}`}
+                    fill
+                    className="object-contain rounded-lg border"
+                  />
+                </div>
               ))}
             </div>
           </div>

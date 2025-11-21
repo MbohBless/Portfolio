@@ -2,16 +2,25 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Helper function to create Supabase client
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
+
+  return createClient(supabaseUrl, supabaseKey)
+}
 
 export async function POST(request: NextRequest) {
   try {
     // TODO: Add authentication check here
     // const session = await getServerSession()
     // if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const supabase = getSupabaseClient()
 
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -107,6 +116,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // TODO: Add authentication check
+    const supabase = getSupabaseClient()
+
     const { searchParams } = new URL(request.url)
     const fileId = searchParams.get('id')
 
