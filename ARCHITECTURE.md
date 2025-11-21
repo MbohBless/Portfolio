@@ -2,36 +2,37 @@
 
 ## System Overview
 
-Production-grade personal portfolio platform with:
-- Public content (projects, publications, blog)
-- Admin panel for content management
-- Full-text search
+Production-grade personal portfolio platform built with **Next.js 14**, **Prisma ORM**, and **PostgreSQL**.
+
+### Key Features
+- Public content (projects, publications, blog with MDX)
+- Admin panel for content management (protected by Supabase Auth)
+- Full-text search across all content
 - File storage for PDFs and media
+- Server-side rendering for optimal SEO
+- Direct database access (no API layer)
+
+---
 
 ## Technology Stack
 
-### Frontend
-- **Framework**: Next.js 14+ (App Router)
+### Frontend & Backend (Unified)
+- **Framework**: Next.js 14+ (App Router, React Server Components)
 - **Language**: TypeScript 5+
+- **ORM**: Prisma 5
 - **Styling**: TailwindCSS 3+
 - **Content**: MDX for blog posts
-- **Deployment**: Vercel
-
-### Backend
-- **Framework**: Ktor 2.3+
-- **Language**: Kotlin 1.9+
-- **Runtime**: JVM 17+
-- **Deployment**: Render (Docker container)
+- **Deployment**: Vercel (serverless)
 
 ### Data Layer
-- **Database**: PostgreSQL 15+ (Supabase)
+- **Database**: PostgreSQL 15+ (Supabase recommended)
 - **Storage**: Supabase Storage (S3-compatible)
-- **Auth**: Supabase Auth (JWT)
+- **Auth**: Supabase Auth (JWT-based)
 
 ### Infrastructure
-- **Local Dev**: Docker Compose
+- **Local Dev**: Docker Compose (Postgres only)
 - **CI/CD**: GitHub Actions
-- **Monitoring**: Supabase Dashboard + Vercel Analytics
+- **Monitoring**: Vercel Analytics + Supabase Dashboard
 
 ---
 
@@ -51,28 +52,18 @@ Production-grade personal portfolio platform with:
     └────────────┬─────────────┘
                  │
         ┌────────▼─────────┐
-        │  Next.js Frontend │
-        │  (App Router)     │
-        │                   │
-        │  • SSR Pages      │
-        │  • Server Actions │
-        │  • Static Assets  │
-        └─────┬─────────────┘
+        │  Next.js App     │
+        │  (Full-Stack)    │
+        │                  │
+        │  • Server        │
+        │    Components    │
+        │  • Server        │
+        │    Actions       │
+        │  • API Routes    │
+        │  • Middleware    │
+        └─────┬────────────┘
               │
-              │ REST API
-              │ (Auth: JWT Bearer Token)
-              │
-        ┌─────▼──────────────┐
-        │  Ktor Backend      │
-        │  (Render/Docker)   │
-        │                    │
-        │  • /auth           │
-        │  • /projects       │
-        │  • /publications   │
-        │  • /blog-posts     │
-        │  • /upload         │
-        │  • /search         │
-        └─────┬──────────────┘
+              │ Prisma ORM
               │
     ┌─────────┼─────────────┐
     │         │             │
@@ -83,69 +74,65 @@ Production-grade personal portfolio platform with:
 │         │ │            │ │             │
 │• JWT    │ │• users     │ │• PDFs       │
 │• OAuth  │ │• projects  │ │• Images     │
-└─────────┘ │• pubs      │ └─────────────┘
-            │• blog_posts│
-            └────────────┘
+│         │ │• pubs      │ │• MDX files  │
+│         │ │• blog_posts│ │             │
+└─────────┘ └────────────┘ └─────────────┘
 ```
 
 ---
 
-## API Contract
+## Request Flow Examples
 
-### Base URL
-- **Production**: `https://api.yourdomain.com`
-- **Local**: `http://localhost:8080`
-
-### Authentication
-All admin endpoints require JWT in header:
+### Public Page (Server Component)
 ```
-Authorization: Bearer <supabase_jwt_token>
-```
-
-### Endpoints
-
-#### Auth
-```
-POST   /auth/login
-POST   /auth/refresh
+1. User visits /projects
+2. Next.js Server Component executes
+3. Prisma queries: prisma.project.findMany({ where: { published: true }})
+4. HTML rendered on server with data
+5. Static HTML sent to browser
+6. React hydrates client-side
 ```
 
-#### Projects
+**Advantages:**
+- No API roundtrip delay
+- SEO-friendly (fully rendered HTML)
+- Faster Time to First Byte (TTFB)
+
+### Admin Action (Server Action)
 ```
-GET    /projects           # Public - list all
-GET    /projects/:id       # Public - get one
-POST   /projects           # Admin - create
-PUT    /projects/:id       # Admin - update
-DELETE /projects/:id       # Admin - delete
+1. Admin submits form to create project
+2. Form calls createProject() Server Action
+3. Next.js validates JWT via middleware
+4. Server Action: prisma.project.create({ data })
+5. revalidatePath('/projects') clears cache
+6. Success response returned
+7. Page auto-updates with new data
 ```
 
-#### Publications
+**Advantages:**
+- No REST API needed
+- Type-safe end-to-end
+- Progressive enhancement (works without JS)
+
+### Search (API Route)
 ```
-GET    /publications       # Public - list all
-GET    /publications/:id   # Public - get one
-POST   /publications       # Admin - create
-PUT    /publications/:id   # Admin - update
-DELETE /publications/:id   # Admin - delete
+1. User types in search box
+2. Frontend calls GET /api/search?q=keyword
+3. API route queries Prisma across all tables
+4. Returns unified JSON results
+5. Frontend displays results
 ```
 
-#### Blog Posts
-```
-GET    /blog-posts         # Public - list all (with pagination)
-GET    /blog-posts/:slug   # Public - get one by slug
-POST   /blog-posts         # Admin - create
-PUT    /blog-posts/:id     # Admin - update
-DELETE /blog-posts/:id     # Admin - delete
-```
+**Use Case:** External access or complex operations not suited for Server Actions.
 
-#### File Upload
+### File Upload (API Route)
 ```
-POST   /upload             # Admin - upload to Supabase Storage
-DELETE /upload/:file_id    # Admin - delete file
-```
-
-#### Search
-```
-GET    /search?q=keyword   # Public - keyword search across all content
+1. Admin uploads file via form
+2. POST /api/upload (multipart/form-data)
+3. API route uploads to Supabase Storage
+4. Saves metadata to media_files table
+5. Returns public URL
+6. Admin uses URL in project/publication
 ```
 
 ---
@@ -155,123 +142,103 @@ GET    /search?q=keyword   # Public - keyword search across all content
 ### Tables
 
 #### users
-```sql
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-email           TEXT UNIQUE NOT NULL
-name            TEXT
-avatar_url      TEXT
-role            TEXT DEFAULT 'admin' -- extendable for multi-user
-created_at      TIMESTAMPTZ DEFAULT NOW()
-updated_at      TIMESTAMPTZ DEFAULT NOW()
+```prisma
+model User {
+  id         String   @id @default(dbgenerated("gen_random_uuid()"))
+  email      String   @unique
+  name       String?
+  avatarUrl  String?
+  role       String   @default("admin")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  mediaFiles MediaFile[]
+}
 ```
 
 #### projects
-```sql
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-title           TEXT NOT NULL
-slug            TEXT UNIQUE NOT NULL
-description     TEXT
-tech_stack      TEXT[] -- Array of technologies
-github_url      TEXT
-demo_url        TEXT
-thumbnail_url   TEXT
-images          TEXT[] -- Array of image URLs
-published       BOOLEAN DEFAULT false
-display_order   INTEGER
-created_at      TIMESTAMPTZ DEFAULT NOW()
-updated_at      TIMESTAMPTZ DEFAULT NOW()
+```prisma
+model Project {
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  title        String
+  slug         String   @unique
+  description  String?
+  techStack    String[] @default([])
+  githubUrl    String?
+  demoUrl      String?
+  thumbnailUrl String?
+  images       String[] @default([])
+  published    Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
 ```
 
 #### publications
-```sql
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-title           TEXT NOT NULL
-slug            TEXT UNIQUE NOT NULL
-authors         TEXT[] NOT NULL
-year            INTEGER NOT NULL
-venue           TEXT -- Conference/Journal name
-doi             TEXT
-arxiv_id        TEXT
-pdf_url         TEXT -- Supabase Storage URL
-abstract        TEXT
-tags            TEXT[]
-published       BOOLEAN DEFAULT false
-created_at      TIMESTAMPTZ DEFAULT NOW()
-updated_at      TIMESTAMPTZ DEFAULT NOW()
+```prisma
+model Publication {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  title     String
+  slug      String   @unique
+  authors   String[]
+  year      Int
+  venue     String?
+  doi       String?
+  arxivId   String?
+  pdfUrl    String?
+  abstract  String?
+  tags      String[] @default([])
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 ```
 
 #### blog_posts
-```sql
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-title           TEXT NOT NULL
-slug            TEXT UNIQUE NOT NULL
-excerpt         TEXT
-content_url     TEXT -- Supabase Storage URL to .mdx file
-cover_image_url TEXT
-tags            TEXT[]
-published       BOOLEAN DEFAULT false
-published_at    TIMESTAMPTZ
-reading_time    INTEGER -- minutes
-views           INTEGER DEFAULT 0
-created_at      TIMESTAMPTZ DEFAULT NOW()
-updated_at      TIMESTAMPTZ DEFAULT NOW()
+```prisma
+model BlogPost {
+  id            String    @id @default(dbgenerated("gen_random_uuid()"))
+  title         String
+  slug          String    @unique
+  excerpt       String?
+  contentUrl    String?
+  coverImageUrl String?
+  tags          String[]  @default([])
+  published     Boolean   @default(false)
+  publishedAt   DateTime?
+  readingTime   Int       @default(0)
+  views         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
 ```
 
 #### media_files
-```sql
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-original_name   TEXT NOT NULL
-storage_path    TEXT NOT NULL -- Supabase Storage path
-url             TEXT NOT NULL -- Public URL
-mime_type       TEXT NOT NULL
-size_bytes      INTEGER NOT NULL
-uploaded_by     UUID REFERENCES users(id)
-created_at      TIMESTAMPTZ DEFAULT NOW()
-```
+```prisma
+model MediaFile {
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  originalName String
+  storagePath  String
+  url          String
+  mimeType     String
+  sizeBytes    BigInt
+  uploadedBy   String?  @db.Uuid
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
 
-#### analytics_events (optional)
-```sql
-id              BIGSERIAL PRIMARY KEY
-event_type      TEXT NOT NULL -- 'page_view', 'download', etc.
-resource_type   TEXT -- 'blog_post', 'publication', etc.
-resource_id     UUID
-ip_hash         TEXT -- Hashed IP for privacy
-user_agent      TEXT
-created_at      TIMESTAMPTZ DEFAULT NOW()
+  user User? @relation(fields: [uploadedBy], references: [id])
+}
 ```
 
 ### Indexes
-```sql
-CREATE INDEX idx_projects_slug ON projects(slug);
-CREATE INDEX idx_projects_published ON projects(published) WHERE published = true;
-CREATE INDEX idx_publications_slug ON publications(slug);
-CREATE INDEX idx_publications_year ON publications(year DESC);
-CREATE INDEX idx_blog_posts_slug ON blog_posts(slug);
-CREATE INDEX idx_blog_posts_published_at ON blog_posts(published_at DESC) WHERE published = true;
-CREATE INDEX idx_blog_posts_tags ON blog_posts USING GIN(tags);
-```
 
-### Full-Text Search
-```sql
--- Add tsvector columns for efficient search
-ALTER TABLE projects ADD COLUMN search_vector tsvector
-  GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, ''))
-  ) STORED;
-
-ALTER TABLE publications ADD COLUMN search_vector tsvector
-  GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(title, '') || ' ' || coalesce(abstract, ''))
-  ) STORED;
-
-ALTER TABLE blog_posts ADD COLUMN search_vector tsvector
-  GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(title, '') || ' ' || coalesce(excerpt, ''))
-  ) STORED;
-
-CREATE INDEX idx_projects_search ON projects USING GIN(search_vector);
-CREATE INDEX idx_publications_search ON publications USING GIN(search_vector);
-CREATE INDEX idx_blog_posts_search ON blog_posts USING GIN(search_vector);
+Automatically managed by Prisma:
+```prisma
+@@index([slug])
+@@index([published])
+@@index([publishedAt(sort: Desc)])
+@@index([createdAt(sort: Desc)])
 ```
 
 ---
@@ -280,245 +247,417 @@ CREATE INDEX idx_blog_posts_search ON blog_posts USING GIN(search_vector);
 
 ```
 portfolio/
-├── .github/
-│   └── workflows/
-│       ├── frontend.yml       # Vercel deployment
-│       ├── backend.yml        # Render deployment + tests
-│       └── migrations.yml     # DB migrations on merge
-├── frontend/                  # Next.js app
+├── frontend/                      # Next.js monorepo (all code)
 │   ├── src/
-│   │   ├── app/              # App Router pages
-│   │   │   ├── page.tsx      # Home
-│   │   │   ├── projects/
-│   │   │   ├── publications/
-│   │   │   ├── blog/
-│   │   │   │   └── [slug]/
-│   │   │   └── admin/
-│   │   │       ├── dashboard/
-│   │   │       ├── projects/
-│   │   │       ├── publications/
-│   │   │       └── blog/
-│   │   ├── components/       # React components
-│   │   │   ├── ui/           # Shadcn-style primitives
+│   │   ├── app/                  # App Router
+│   │   │   ├── (pages)/
+│   │   │   │   ├── page.tsx     # Home
+│   │   │   │   ├── projects/
+│   │   │   │   │   ├── page.tsx              # List
+│   │   │   │   │   └── [slug]/page.tsx       # Detail
+│   │   │   │   ├── publications/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── blog/
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   └── [slug]/page.tsx
+│   │   │   │   └── admin/
+│   │   │   │       ├── page.tsx              # Dashboard
+│   │   │   │       ├── projects/
+│   │   │   │       ├── publications/
+│   │   │   │       └── blog/
+│   │   │   ├── actions/          # Server Actions (mutations)
+│   │   │   │   ├── projects.ts
+│   │   │   │   ├── publications.ts
+│   │   │   │   └── blog.ts
+│   │   │   ├── api/              # API Routes (external)
+│   │   │   │   ├── search/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── upload/
+│   │   │   │       └── route.ts
+│   │   │   ├── layout.tsx
+│   │   │   └── globals.css
+│   │   ├── components/           # React components
+│   │   │   ├── ui/               # Reusable UI components
 │   │   │   ├── layout/
 │   │   │   └── admin/
 │   │   ├── lib/
-│   │   │   ├── api.ts        # Backend API client
-│   │   │   ├── supabase.ts   # Supabase client
+│   │   │   ├── prisma.ts         # Prisma client singleton
+│   │   │   ├── supabase.ts       # Supabase client
+│   │   │   ├── auth.ts           # Auth helpers
 │   │   │   └── utils.ts
-│   │   └── types/            # TypeScript types
+│   │   ├── types/
+│   │   │   └── index.ts          # TypeScript types
+│   │   └── middleware.ts         # Route protection
+│   ├── prisma/
+│   │   └── schema.prisma         # Database schema
 │   ├── public/
-│   ├── content/              # Optional: Git-based MDX files
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── tailwind.config.ts
 │   └── next.config.js
-├── backend/                   # Kotlin + Ktor
-│   ├── src/
-│   │   └── main/
-│   │       └── kotlin/
-│   │           └── com/
-│   │               └── portfolio/
-│   │                   ├── Application.kt
-│   │                   ├── config/
-│   │                   │   ├── Database.kt
-│   │                   │   └── Security.kt
-│   │                   ├── routes/
-│   │                   │   ├── AuthRoutes.kt
-│   │                   │   ├── ProjectRoutes.kt
-│   │                   │   ├── PublicationRoutes.kt
-│   │                   │   ├── BlogPostRoutes.kt
-│   │                   │   ├── UploadRoutes.kt
-│   │                   │   └── SearchRoutes.kt
-│   │                   ├── models/      # Data classes
-│   │                   ├── services/    # Business logic
-│   │                   ├── repositories/ # Database layer
-│   │                   └── utils/
-│   ├── resources/
-│   │   └── application.conf
-│   ├── build.gradle.kts
-│   └── Dockerfile
-├── migrations/                # SQL migrations
-│   ├── 001_init_users.sql
-│   ├── 002_create_projects.sql
-│   ├── 003_create_publications.sql
-│   ├── 004_create_blog_posts.sql
-│   ├── 005_create_media_files.sql
-│   └── 006_add_search_indexes.sql
-├── docker-compose.yml         # Local Postgres + (optional) Ktor
+├── migrations/                    # Legacy SQL (reference only)
+├── .github/workflows/
+│   └── frontend.yml              # CI/CD pipeline
+├── docker-compose.yml            # Local Postgres
 ├── .env.example
-├── .env.local.example
-├── README.md
-└── ARCHITECTURE.md
+└── README.md
 ```
 
 ---
 
-## Data Flow Examples
+## Data Flow Patterns
 
-### Public Blog Post Rendering
-1. User visits `/blog/my-post-slug`
-2. Next.js Server Component fetches from Ktor: `GET /blog-posts/my-post-slug`
-3. Ktor queries Postgres for metadata + `content_url`
-4. Next.js fetches MDX from `content_url` (Supabase Storage)
-5. Next.js compiles MDX and renders page
+### Pattern 1: Server Component (Read)
 
-### Admin Creating a Project
-1. Admin logs in → Supabase Auth → JWT stored in cookie
-2. Admin submits form in `/admin/projects/new`
-3. Next.js Server Action POSTs to Ktor: `POST /projects` (with JWT)
-4. Ktor validates JWT with Supabase
-5. Ktor inserts into `projects` table
-6. Returns created project
-7. Next.js revalidates cache and redirects
+**Use Case:** Display public content
 
-### File Upload
-1. Admin uploads file in admin panel
-2. Next.js sends to Ktor: `POST /upload` (multipart)
-3. Ktor uploads to Supabase Storage
-4. Ktor inserts record into `media_files` table
-5. Returns public URL
-6. Frontend uses URL in project/publication form
+```typescript
+// app/projects/page.tsx
+import { prisma } from '@/lib/prisma'
 
-### Search
-1. User types "machine learning" in search box
-2. Frontend calls `GET /search?q=machine+learning`
-3. Ktor performs `ts_rank` query across all `search_vector` columns
-4. Returns ranked results from projects, publications, blog posts
-5. Frontend displays unified results
+export default async function ProjectsPage() {
+  // Direct database query in Server Component
+  const projects = await prisma.project.findMany({
+    where: { published: true },
+    orderBy: { displayOrder: 'asc' }
+  })
+
+  return (
+    <div>
+      {projects.map(project => (
+        <ProjectCard key={project.id} project={project} />
+      ))}
+    </div>
+  )
+}
+```
+
+**Execution:** Server-side only, no client bundle impact
+
+### Pattern 2: Server Action (Write)
+
+**Use Case:** Admin creates/updates content
+
+```typescript
+// app/actions/projects.ts
+'use server'
+
+import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
+
+export async function createProject(formData: FormData) {
+  const project = await prisma.project.create({
+    data: {
+      title: formData.get('title'),
+      slug: formData.get('slug'),
+      // ... other fields
+    }
+  })
+
+  revalidatePath('/projects') // Clear cache
+  return { success: true, project }
+}
+```
+
+**Usage in Client Component:**
+```typescript
+'use client'
+
+import { createProject } from '@/app/actions/projects'
+
+export function CreateProjectForm() {
+  return (
+    <form action={createProject}>
+      <input name="title" />
+      <button type="submit">Create</button>
+    </form>
+  )
+}
+```
+
+### Pattern 3: API Route (Complex Operations)
+
+**Use Case:** Search, file upload, webhooks
+
+```typescript
+// app/api/search/route.ts
+import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  const query = request.nextUrl.searchParams.get('q')
+
+  const results = await prisma.$queryRaw`
+    SELECT * FROM search_all(${query}, 20)
+  `
+
+  return NextResponse.json({ results })
+}
+```
+
+**Usage:** Standard fetch from client or external services
 
 ---
 
-## Security Considerations
+## Authentication & Authorization
 
-### Authentication Flow
-1. User logs in via Supabase Auth (email/password or OAuth)
-2. Supabase returns JWT with user metadata
-3. Next.js stores JWT in HTTP-only cookie
-4. All admin API calls include JWT in `Authorization` header
-5. Ktor validates JWT using Supabase public key (JWKS)
+### Flow
 
-### Authorization
-- **Public routes**: No auth required
-- **Admin routes**: Require valid JWT with role check
-- **File uploads**: Validate file types, scan for malware (optional)
-- **SQL Injection**: Use prepared statements (Exposed ORM)
-- **XSS**: Sanitize MDX content before storage
+1. **Login**: User authenticates via Supabase Auth (email/OAuth)
+2. **JWT Storage**: Token stored in HTTP-only cookie
+3. **Middleware**: `middleware.ts` validates JWT on protected routes
+4. **Authorization**: Check user role in Server Actions
 
-### Rate Limiting
-- Implement rate limiting on Ktor (e.g., `ktor-rate-limit` plugin)
-- Vercel has built-in DDoS protection
-- Supabase has connection pooling
+### Implementation
+
+```typescript
+// middleware.ts
+import { createServerClient } from '@supabase/ssr'
+
+export async function middleware(request: NextRequest) {
+  const supabase = createServerClient(...)
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (request.nextUrl.pathname.startsWith('/admin') && !session) {
+    return NextResponse.redirect('/login')
+  }
+}
+```
+
+### Protected Routes
+
+- `/admin/*` - Requires authentication
+- All API routes in `/api/upload/*` - Requires JWT
 
 ---
 
 ## Performance Optimizations
 
-### Frontend
-- **ISR**: Incremental Static Regeneration for blog posts
-- **Image Optimization**: Next.js `<Image>` component with Supabase CDN
-- **Code Splitting**: Dynamic imports for admin components
-- **Edge Runtime**: Use for auth middleware
+### Server Components
+- ✅ **No JavaScript sent to client** for data fetching
+- ✅ **Parallel data fetching** with React Suspense
+- ✅ **Automatic code splitting** at component level
 
-### Backend
-- **Connection Pooling**: HikariCP for Postgres
-- **Caching**: Redis or in-memory cache for frequently accessed data
-- **Pagination**: Limit queries to 20-50 items per page
-- **Compression**: Gzip/Brotli responses
+### Caching Strategy
+```typescript
+// Revalidate every 60 seconds
+export const revalidate = 60
+
+// Or on-demand revalidation
+revalidatePath('/projects')
+revalidateTag('projects-list')
+```
 
 ### Database
-- **Indexes**: Already defined above
-- **Materialized Views**: For complex analytics queries
-- **Read Replicas**: Supabase Pro tier supports this
+- **Connection Pooling**: Prisma handles automatically
+- **Prepared Statements**: All queries are parameterized
+- **Indexes**: Defined in Prisma schema, auto-created on migration
+
+### Static Generation (ISR)
+- Blog posts: Statically generated, revalidated on change
+- Projects/Publications: ISR with 60s revalidation
+- Admin pages: Dynamic (always fresh)
 
 ---
 
-## Deployment Strategy
+## Security
 
-### Frontend (Vercel)
-1. Push to `main` branch → auto-deploy
-2. Preview deployments for PRs
-3. Environment variables in Vercel dashboard
-4. Custom domain with SSL
+### SQL Injection
+✅ **Protected**: Prisma uses prepared statements automatically
 
-### Backend (Render)
-1. Dockerfile builds fat JAR
-2. Push to `main` → auto-deploy Docker container
-3. Environment variables in Render dashboard
-4. Health check endpoint: `GET /health`
+### XSS
+✅ **Protected**: React escapes content by default
+⚠️ **Note**: Sanitize MDX content before storing
 
-### Database (Supabase)
-1. Migrations run via CI/CD or Supabase CLI
-2. Automated backups (Supabase handles this)
-3. Connection string in backend env vars
+### CSRF
+✅ **Protected**: Server Actions use built-in CSRF tokens
 
-### CI/CD
-- **Tests**: Run unit tests on PR
-- **Linting**: ESLint (frontend), ktlint (backend)
-- **Type Checking**: `tsc --noEmit` (frontend)
-- **Build**: Ensure builds succeed before merge
+### JWT Validation
+✅ **Protected**: Middleware validates all admin requests
+
+### Rate Limiting
+⚠️ **TODO**: Add rate limiting middleware for API routes
 
 ---
 
-## Local Development Setup
+## Deployment
 
-### Prerequisites
-- Docker & Docker Compose
-- Node.js 20+
-- JDK 17+
-- Gradle 8+
-- Supabase CLI (optional)
+### Vercel (Recommended)
 
-### Steps
-1. Clone repo
-2. Copy `.env.example` → `.env`
-3. Run `docker-compose up -d` (starts Postgres)
-4. Run migrations: `psql -h localhost -U postgres -f migrations/*.sql`
-5. Start backend: `cd backend && ./gradlew run`
-6. Start frontend: `cd frontend && npm run dev`
-7. Access at `http://localhost:3000`
+**Step 1:** Connect GitHub repo
+
+**Step 2:** Configure project
+```
+Root Directory: frontend
+Framework: Next.js
+Build Command: npm run build
+```
+
+**Step 3:** Environment Variables
+```
+DATABASE_URL=postgresql://...
+NEXT_PUBLIC_SUPABASE_URL=https://...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+```
+
+**Step 4:** Deploy
+- Automatic on push to `main`
+- Preview deployments on PRs
+
+### Database Migrations
+
+```bash
+# Option 1: Prisma Migrate (production)
+npx prisma migrate deploy
+
+# Option 2: Prisma Push (development)
+npx prisma db push
+```
+
+Run from Vercel Build Command:
+```json
+{
+  "build": "prisma generate && prisma migrate deploy && next build"
+}
+```
 
 ---
 
 ## Monitoring & Observability
 
 ### Logs
-- **Frontend**: Vercel logs + `console.error` → Sentry
-- **Backend**: Ktor logs → Render logs or external service
+- **Server-side**: Vercel Functions logs
+- **Client-side**: Vercel Web Analytics
+- **Database**: Supabase Dashboard (query performance)
 
 ### Metrics
-- **Frontend**: Vercel Analytics (Web Vitals)
-- **Backend**: Health endpoint + Render metrics
-- **Database**: Supabase dashboard (query performance, connections)
+- **Web Vitals**: Tracked by Vercel Analytics
+- **Database**: Connection pool, query latency (Supabase)
+- **Errors**: Console logs → Sentry (optional)
 
 ### Alerts
-- **Downtime**: Render alerts
-- **Errors**: Sentry
-- **Database**: Supabase disk usage alerts
+- Vercel: Deployment failures, quota warnings
+- Supabase: Disk usage, slow queries
+
+---
+
+## Cost Analysis
+
+### Monthly Costs
+
+| Service | Tier | Features | Cost |
+|---------|------|----------|------|
+| **Vercel** | Hobby | 100GB bandwidth, serverless functions | **$0** |
+| **Supabase** | Free | 500MB DB, 1GB storage, 50K auth users | **$0** |
+| **Domain** | - | .com from Namecheap | **$1-2** |
+| **Total** | | | **$1-2/mo** |
+
+### Scaling Costs
+
+| Tier | Traffic | Cost |
+|------|---------|------|
+| Hobby/Free | <100K visitors/mo | **$0-2** |
+| Pro | 100K-1M visitors/mo | **$20-50** |
+| Enterprise | >1M visitors/mo | **Custom** |
+
+---
+
+## Development Workflow
+
+### Local Setup
+```bash
+# 1. Start database
+docker-compose up -d
+
+# 2. Install dependencies
+cd frontend && npm install
+
+# 3. Setup database
+npm run db:push
+
+# 4. Start dev server
+npm run dev
+```
+
+### Making Schema Changes
+```bash
+# 1. Edit prisma/schema.prisma
+# 2. Push changes
+npm run db:push
+
+# 3. Regenerate client
+npm run db:generate
+```
+
+### Adding New Features
+```bash
+# 1. Create Server Action in app/actions/
+# 2. Create page in app/(pages)/
+# 3. Test locally
+# 4. Commit and push (auto-deploys)
+```
+
+---
+
+## Why This Architecture?
+
+### Advantages Over Microservices
+
+| **Microservices** (Old) | **Monolith** (Current) |
+|--------------------------|------------------------|
+| Multiple repos to sync | Single source of truth |
+| Network latency between services | In-process function calls |
+| Complex deployment coordination | One-click deployment |
+| Polyglot infrastructure overhead | Unified TypeScript stack |
+| $25-50/mo minimum cost | $0 with free tiers |
+
+### When to Consider Splitting
+
+Only if you need:
+1. **Independent scaling** of different services (unlikely for portfolio)
+2. **Polyglot teams** (different languages per service)
+3. **Strict isolation** between business domains
+4. **Compliance** requirements (data locality, separate audit logs)
+
+For a portfolio site: **Monolith is optimal.**
 
 ---
 
 ## Future Enhancements
 
-1. **Newsletter**: Integrate with Resend/SendGrid
-2. **Comments**: Add Giscus (GitHub Discussions)
-3. **Analytics**: Replace optional table with Plausible/Umami
-4. **Multi-language**: i18n support
-5. **Dark Mode**: Toggle with Tailwind
-6. **RSS Feed**: Generate from blog posts
-7. **Sitemap**: Auto-generate for SEO
-8. **E2E Tests**: Playwright for critical flows
+### Phase 1 (Immediate)
+- [ ] Admin UI forms for CRUD operations
+- [ ] MDX rendering with `next-mdx-remote`
+- [ ] Login page with Supabase Auth
+
+### Phase 2 (Short-term)
+- [ ] Newsletter integration (Resend/SendGrid)
+- [ ] Comment system (Giscus/GitHub Discussions)
+- [ ] Dark mode toggle
+
+### Phase 3 (Long-term)
+- [ ] Full-text search with PostgreSQL `tsvector` (already in schema)
+- [ ] Analytics dashboard (view counts, popular posts)
+- [ ] RSS feed generation
+- [ ] Sitemap auto-generation
+- [ ] E2E tests with Playwright
 
 ---
 
-## Cost Estimate (Monthly)
+## References
 
-| Service | Tier | Cost |
-|---------|------|------|
-| Vercel | Hobby | $0 (free) |
-| Render | Free/Starter | $0-7 |
-| Supabase | Free/Pro | $0-25 |
-| Domain | Namecheap | $1-2 |
-| **Total** | | **$1-34/mo** |
+- **Next.js Docs**: https://nextjs.org/docs
+- **Prisma Docs**: https://www.prisma.io/docs
+- **Supabase Docs**: https://supabase.com/docs
+- **Vercel Deployment**: https://vercel.com/docs
 
-Scale up as needed.
+---
+
+## Support
+
+For issues or questions:
+1. Check README.md for common problems
+2. Review Prisma schema for database structure
+3. Inspect Server Actions for mutation logic
+4. Check middleware.ts for auth flow
