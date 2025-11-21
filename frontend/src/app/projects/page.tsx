@@ -1,11 +1,14 @@
-import { apiClient } from '@/lib/api'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
 
 export const revalidate = 60 // Revalidate every 60 seconds
 
 export default async function ProjectsPage() {
-  const projects = await apiClient.getProjects(true)
+  const projects = await prisma.project.findMany({
+    where: { published: true },
+    orderBy: { displayOrder: 'asc' },
+  })
 
   return (
     <div className="min-h-screen">

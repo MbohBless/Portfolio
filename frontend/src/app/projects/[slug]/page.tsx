@@ -1,9 +1,11 @@
-import { apiClient } from '@/lib/api'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const project = await apiClient.getProject(params.slug).catch(() => null)
+  const project = await prisma.project.findUnique({
+    where: { slug: params.slug, published: true },
+  })
 
   if (!project) {
     return { title: 'Project Not Found' }
@@ -16,7 +18,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ProjectPage({ params }: { params: { slug: string } }) {
-  const project = await apiClient.getProject(params.slug).catch(() => null)
+  const project = await prisma.project.findUnique({
+    where: { slug: params.slug, published: true },
+  })
 
   if (!project) {
     notFound()

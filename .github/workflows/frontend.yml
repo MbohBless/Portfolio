@@ -31,6 +31,12 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Generate Prisma Client
+        working-directory: frontend
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portfolio
+
       - name: Run ESLint
         working-directory: frontend
         run: npm run lint
@@ -63,9 +69,10 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
   deploy:
     name: Deploy to Vercel

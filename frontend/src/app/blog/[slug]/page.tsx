@@ -1,10 +1,13 @@
-import { apiClient } from '@/lib/api'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
+import { incrementBlogViews } from '@/app/actions/blog'
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const post = await apiClient.getBlogPost(params.slug).catch(() => null)
+  const post = await prisma.blogPost.findUnique({
+    where: { slug: params.slug, published: true },
+  })
 
   if (!post) {
     return { title: 'Post Not Found' }
@@ -17,17 +20,22 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await apiClient.getBlogPost(params.slug).catch(() => null)
+  const post = await prisma.blogPost.findUnique({
+    where: { slug: params.slug, published: true },
+  })
 
   if (!post) {
     notFound()
   }
 
+  // Increment views (non-blocking)
+  incrementBlogViews(post.id).catch(() => {})
+
   // Fetch MDX content from contentUrl
   let mdxContent = ''
   if (post.contentUrl) {
     try {
-      const response = await fetch(post.contentUrl)
+      const response = await fetch(post.contentUrl, { cache: 'no-store' })
       mdxContent = await response.text()
     } catch (error) {
       console.error('Failed to fetch MDX content:', error)
@@ -50,7 +58,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
           <div className="flex gap-4 text-gray-500 mb-8">
             {post.publishedAt && (
-              <time>{formatDate(post.publishedAt)}</time>
+              <time>{formatDate(post.publishedAt.toISOString())}</time>
             )}
             <span>{post.readingTime} min read</span>
             <span>{post.views} views</span>
@@ -71,10 +79,11 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
           <div className="prose prose-lg max-w-none">
             {/* Render MDX content here */}
-            {/* For now, displaying as plain text */}
-            {/* In production, use next-mdx-remote or similar */}
+            {/* TODO: Use next-mdx-remote for proper MDX rendering */}
             {mdxContent ? (
               <div className="whitespace-pre-wrap">{mdxContent}</div>
+            ) : post.excerpt ? (
+              <p>{post.excerpt}</p>
             ) : (
               <p className="text-gray-500">Content not available</p>
             )}

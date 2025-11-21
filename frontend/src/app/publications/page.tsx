@@ -1,10 +1,13 @@
-import { apiClient } from '@/lib/api'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 
 export const revalidate = 60
 
 export default async function PublicationsPage() {
-  const publications = await apiClient.getPublications(true)
+  const publications = await prisma.publication.findMany({
+    where: { published: true },
+    orderBy: { year: 'desc' },
+  })
 
   // Group publications by year
   const byYear = publications.reduce((acc, pub) => {

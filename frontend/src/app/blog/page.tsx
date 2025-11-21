@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 
@@ -10,7 +10,22 @@ export default async function BlogPage({
   searchParams: { page?: string }
 }) {
   const page = Number(searchParams.page) || 1
-  const response = await apiClient.getBlogPosts(true, page, 10)
+  const pageSize = 10
+  const skip = (page - 1) * pageSize
+
+  const [posts, totalCount] = await Promise.all([
+    prisma.blogPost.findMany({
+      where: { published: true },
+      orderBy: { publishedAt: 'desc' },
+      take: pageSize,
+      skip,
+    }),
+    prisma.blogPost.count({
+      where: { published: true },
+    }),
+  ])
+
+  const totalPages = Math.ceil(totalCount / pageSize)
 
   return (
     <div className="min-h-screen">
@@ -37,7 +52,7 @@ export default async function BlogPage({
         <h1 className="text-4xl font-bold mb-8">Blog</h1>
 
         <div className="space-y-12">
-          {response.data.map((post) => (
+          {posts.map((post) => (
             <article key={post.id} className="pb-8 border-b">
               <Link
                 href={`/blog/${post.slug}`}
@@ -47,7 +62,7 @@ export default async function BlogPage({
               </Link>
               <div className="flex gap-4 text-gray-500 text-sm mb-4">
                 {post.publishedAt && (
-                  <time>{formatDate(post.publishedAt)}</time>
+                  <time>{formatDate(post.publishedAt.toISOString())}</time>
                 )}
                 <span>{post.readingTime} min read</span>
                 <span>{post.views} views</span>
@@ -69,13 +84,13 @@ export default async function BlogPage({
           ))}
         </div>
 
-        {response.data.length === 0 && (
+        {posts.length === 0 && (
           <div className="text-center py-16 text-gray-500">
             No blog posts yet. Check back soon!
           </div>
         )}
 
-        {response.totalPages > 1 && (
+        {totalPages > 1 && (
           <div className="flex justify-center gap-2 mt-12">
             {page > 1 && (
               <Link
@@ -86,9 +101,9 @@ export default async function BlogPage({
               </Link>
             )}
             <span className="px-4 py-2">
-              Page {page} of {response.totalPages}
+              Page {page} of {totalPages}
             </span>
-            {page < response.totalPages && (
+            {page < totalPages && (
               <Link
                 href={`/blog?page=${page + 1}`}
                 className="px-4 py-2 border rounded hover:bg-gray-50"
