@@ -1,0 +1,48 @@
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+target/
+
+# Gradle
+.gradle/
+backend/build/
+backend/.gradle/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
+.npm
+.eslintcache
+
+# Docker
+postgres_data/
