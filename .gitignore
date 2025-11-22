@@ -48,15 +48,3 @@ coverage/
 postgres_data/
 
 # Markdown: ignore all .md files except README and architecture (cover common case variants)
-*.md
-!README.md
-!Readme.md
-!readme.md
-!README.*
-!architecture.md
-!Architecture.md
-!ARCHITECTURE.md
-!architecture.*
-!architecrue.md
-!Architecrue.md
-!ARCHITECRUE.md
