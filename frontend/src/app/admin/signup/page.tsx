@@ -1,17 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-client'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { checkUsersExist } from '@/app/actions/auth'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [success, setSuccess] = useState(false)
+  const [userExists, setUserExists] = useState<boolean | null>(null)
   const { signUp, loading, error } = useAuth()
+
+  // Check if users already exist on component mount
+  useEffect(() => {
+    async function checkUsers() {
+      const exists = await checkUsersExist()
+      setUserExists(exists)
+    }
+    checkUsers()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,6 +35,49 @@ export default function SignupPage() {
     if (result.data && !result.error) {
       setSuccess(true)
     }
+  }
+
+  // Show loading state while checking if users exist
+  if (userExists === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="text-gray-600">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show message when user already exists - signup is disabled
+  if (userExists) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white border border-gray-200 p-8 text-center">
+            <div className="text-4xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold mb-4">Signup Disabled</h2>
+            <p className="text-gray-600 mb-6">
+              An admin account already exists. Only one account is allowed per portfolio.
+            </p>
+            <Link href="/admin/login">
+              <Button variant="primary" className="w-full">
+                Go to Login
+              </Button>
+            </Link>
+          </div>
+
+          {/* Back to site */}
+          <div className="mt-6 text-center">
+            <Link
+              href="/"
+              className="text-sm text-gray-600 hover:text-black"
+            >
+              ← Back to site
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (success) {

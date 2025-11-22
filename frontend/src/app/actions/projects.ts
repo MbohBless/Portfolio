@@ -81,3 +81,30 @@ export async function deleteProject(id: string) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to delete project' }
   }
 }
+
+export async function getProjects() {
+  try {
+    const projects = await prisma.project.findMany({
+      orderBy: { displayOrder: 'asc' },
+    })
+    return { success: true, data: projects }
+  } catch (error) {
+    console.error('Error fetching projects:', error)
+    return { success: false, error: 'Failed to fetch projects' }
+  }
+}
+
+export async function getProject(id: string) {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id },
+    })
+    if (!project) {
+      return { success: false, error: 'Project not found' }
+    }
+    return { success: true, data: project }
+  } catch (error) {
+    console.error('Error fetching project:', error)
+    return { success: false, error: 'Failed to fetch project' }
+  }
+}

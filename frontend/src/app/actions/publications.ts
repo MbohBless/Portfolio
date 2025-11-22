@@ -85,3 +85,30 @@ export async function deletePublication(id: string) {
     return { success: false, error: error instanceof Error ? error.message : 'Failed to delete publication' }
   }
 }
+
+export async function getPublications() {
+  try {
+    const publications = await prisma.publication.findMany({
+      orderBy: { year: 'desc' },
+    })
+    return { success: true, data: publications }
+  } catch (error) {
+    console.error('Error fetching publications:', error)
+    return { success: false, error: 'Failed to fetch publications' }
+  }
+}
+
+export async function getPublication(id: string) {
+  try {
+    const publication = await prisma.publication.findUnique({
+      where: { id },
+    })
+    if (!publication) {
+      return { success: false, error: 'Publication not found' }
+    }
+    return { success: true, data: publication }
+  } catch (error) {
+    console.error('Error fetching publication:', error)
+    return { success: false, error: 'Failed to fetch publication' }
+  }
+}

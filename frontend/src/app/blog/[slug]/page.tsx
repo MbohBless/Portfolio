@@ -3,6 +3,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 import { incrementBlogViews } from '@/app/actions/blog'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeHighlight from 'rehype-highlight'
+import 'highlight.js/styles/github.css'
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const post = await prisma.blogPost.findUnique({
@@ -30,17 +34,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
   // Increment views (non-blocking)
   incrementBlogViews(post.id).catch(() => {})
-
-  // Fetch MDX content from contentUrl
-  let mdxContent = ''
-  if (post.contentUrl) {
-    try {
-      const response = await fetch(post.contentUrl, { cache: 'no-store' })
-      mdxContent = await response.text()
-    } catch (error) {
-      console.error('Failed to fetch MDX content:', error)
-    }
-  }
 
   return (
     <div className="min-h-screen">
@@ -77,17 +70,40 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             </div>
           )}
 
-          <div className="prose prose-lg max-w-none">
-            {/* Render MDX content here */}
-            {/* TODO: Use next-mdx-remote for proper MDX rendering */}
-            {mdxContent ? (
-              <div className="whitespace-pre-wrap">{mdxContent}</div>
-            ) : post.excerpt ? (
-              <p>{post.excerpt}</p>
-            ) : (
-              <p className="text-gray-500">Content not available</p>
-            )}
-          </div>
+          {post.coverImageUrl && (
+            <img
+              src={post.coverImageUrl}
+              alt={post.title}
+              className="w-full h-64 object-cover rounded-lg mb-8"
+            />
+          )}
+
+          {post.content ? (
+            <div className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-[''] prose-code:after:content-[''] prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-img:rounded-lg">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+                components={{
+                  // Custom rendering for links to open in new tab
+                  a: ({ node, ...props }) => (
+                    <a {...props} target="_blank" rel="noopener noreferrer" />
+                  ),
+                  // Custom rendering for tables
+                  table: ({ node, ...props }) => (
+                    <div className="overflow-x-auto">
+                      <table {...props} />
+                    </div>
+                  ),
+                }}
+              >
+                {post.content}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <p>No content available for this post yet.</p>
+            </div>
+          )}
         </article>
       </main>
     </div>

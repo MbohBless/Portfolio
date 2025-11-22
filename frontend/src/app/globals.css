@@ -78,3 +78,119 @@ a {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
+
+/* Markdown Editor Light Mode Styles - Force Light Theme */
+.w-md-editor,
+[data-color-mode="light"] .w-md-editor,
+[data-color-mode*="light"] .w-md-editor {
+  --md-editor-bg-color: #ffffff !important;
+  --md-editor-text-color: #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-color-mode="light"] .w-md-editor-toolbar {
+  background-color: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+[data-color-mode="light"] .w-md-editor-content {
+  background-color: #ffffff !important;
+}
+
+[data-color-mode="light"] .w-md-editor-text {
+  color: #000000 !important;
+}
+
+[data-color-mode="light"] .w-md-editor-text-pre,
+[data-color-mode="light"] .w-md-editor-text-input {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Force text visibility in textarea - Most Important */
+.w-md-editor-text-pre > code,
+.w-md-editor-text-input textarea,
+[data-color-mode="light"] .w-md-editor-text-pre > code,
+[data-color-mode="light"] .w-md-editor-text-input textarea {
+  color: #000000 !important;
+  caret-color: #000000 !important;
+  background-color: transparent !important;
+}
+
+.w-md-editor-area,
+[data-color-mode="light"] .w-md-editor-area {
+  background-color: #ffffff !important;
+}
+
+.w-md-editor-input,
+[data-color-mode="light"] .w-md-editor-input {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Target the actual textarea element */
+.w-md-editor textarea,
+[data-color-mode="light"] .w-md-editor textarea {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+.w-md-editor-text-pre code,
+[data-color-mode="light"] .w-md-editor-text-pre code {
+  color: #000000 !important;
+}
+
+/* Specific fix for the code element inside editor */
+.w-md-editor-text-pre code[class*="language-"],
+[data-color-mode="light"] .w-md-editor-text-pre code[class*="language-"] {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+[data-color-mode="light"] .w-md-editor-preview {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-color-mode="light"] .wmde-markdown {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Code block styling in preview */
+[data-color-mode="light"] .wmde-markdown pre {
+  background-color: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+[data-color-mode="light"] .wmde-markdown code {
+  background-color: #f3f4f6 !important;
+  color: #dc2626 !important;
+}
+
+/* Table styling in preview */
+[data-color-mode="light"] .wmde-markdown table {
+  border-collapse: collapse;
+}
+
+[data-color-mode="light"] .wmde-markdown table th,
+[data-color-mode="light"] .wmde-markdown table td {
+  border: 1px solid #e5e7eb !important;
+  padding: 8px 12px;
+}
+
+[data-color-mode="light"] .wmde-markdown table th {
+  background-color: #f9fafb !important;
+  font-weight: 600;
+}
+
+/* Toolbar buttons */
+[data-color-mode="light"] .w-md-editor-toolbar button {
+  color: #374151 !important;
+}
+
+[data-color-mode="light"] .w-md-editor-toolbar button:hover {
+  background-color: #e5e7eb !important;
+}

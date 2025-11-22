@@ -16,9 +16,12 @@ function getSupabaseClient() {
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Add authentication check here
-    // const session = await getServerSession()
-    // if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Authentication check
+    const { getUser } = await import('@/lib/auth-server')
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const supabase = getSupabaseClient()
 
@@ -32,10 +35,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (max 100MB)
-    if (file.size > 100 * 1024 * 1024) {
+    // Validate file size (max 5MB for blog images)
+    if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'File too large. Max size is 100MB' },
+        { error: 'File too large. Max size is 5MB' },
         { status: 400 }
       )
     }
@@ -61,12 +64,12 @@ export async function POST(request: NextRequest) {
     // Generate storage path
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-    const storagePath = `uploads/${new Date().toISOString().split('T')[0]}/${fileName}`
+    const storagePath = `blog/${new Date().toISOString().split('T')[0]}/${fileName}`
 
     // Upload to Supabase Storage
     const fileBuffer = await file.arrayBuffer()
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(process.env.SUPABASE_STORAGE_BUCKET || 'portfolio-files')
+      .from('documents_bucket')
       .upload(storagePath, fileBuffer, {
         contentType: file.type,
         upsert: false,
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from(process.env.SUPABASE_STORAGE_BUCKET || 'portfolio-files')
+      .from('documents_bucket')
       .getPublicUrl(storagePath)
 
     // Save metadata to database
@@ -93,7 +96,7 @@ export async function POST(request: NextRequest) {
         url: urlData.publicUrl,
         mimeType: file.type,
         sizeBytes: BigInt(file.size),
-        // uploadedBy: session.user.id, // TODO: Add after auth
+        uploadedBy: user.id,
       },
     })
 
@@ -115,7 +118,13 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // TODO: Add authentication check
+    // Authentication check
+    const { getUser } = await import('@/lib/auth-server')
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = getSupabaseClient()
 
     const { searchParams } = new URL(request.url)
@@ -142,7 +151,7 @@ export async function DELETE(request: NextRequest) {
 
     // Delete from Supabase Storage
     const { error: deleteError } = await supabase.storage
-      .from(process.env.SUPABASE_STORAGE_BUCKET || 'portfolio-files')
+      .from('documents_bucket')
       .remove([mediaFile.storagePath])
 
     if (deleteError) {

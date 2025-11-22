@@ -12,7 +12,8 @@ model BlogPost {
   title          String
   slug           String    @unique
   excerpt        String?
-  contentUrl     String?   @map("content_url")
+  content        String?   // Markdown content stored directly
+  contentUrl     String?   @map("content_url") // Optional: for external content
   coverImageUrl  String?   @map("cover_image_url")
   tags           String[]  @default([])
   published      Boolean   @default(false)
@@ -20,7 +21,7 @@ model BlogPost {
   readingTime    Int       @default(0) @map("reading_time")
   views          Int       @default(0)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @map("updated_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([createdAt(sort: Desc)])
   @@index([publishedAt(sort: Desc)])
@@ -82,7 +83,7 @@ model Project {
   published    Boolean  @default(false)
   displayOrder Int      @default(0) @map("display_order")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @map("updated_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([displayOrder])
   @@index([published])
@@ -104,7 +105,7 @@ model Publication {
   tags      String[] @default([])
   published Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @map("updated_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([published])
   @@index([slug])
@@ -119,9 +120,75 @@ model User {
   avatarUrl  String?     @map("avatar_url")
   role       String      @default("admin")
   createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime    @map("updated_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
   mediaFiles MediaFile[]
 
   @@index([email])
   @@map("users")
+}
+
+model WorkExperience {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company      String
+  position     String
+  location     String?
+  startDate    DateTime  @map("start_date") @db.Date
+  endDate      DateTime? @map("end_date") @db.Date
+  current      Boolean   @default(false)
+  description  String?
+  achievements String[]  @default([])
+  technologies String[]  @default([])
+  companyUrl   String?   @map("company_url")
+  displayOrder Int       @default(0) @map("display_order")
+  published    Boolean   @default(false)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([displayOrder])
+  @@index([published])
+  @@index([startDate(sort: Desc)])
+  @@map("work_experiences")
+}
+
+model Education {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institution  String
+  degree       String
+  fieldOfStudy String    @map("field_of_study")
+  location     String?
+  startDate    DateTime  @map("start_date") @db.Date
+  endDate      DateTime? @map("end_date") @db.Date
+  current      Boolean   @default(false)
+  grade        String?
+  description  String?
+  achievements String[]  @default([])
+  courses      String[]  @default([])
+  institutionUrl String? @map("institution_url")
+  displayOrder Int       @default(0) @map("display_order")
+  published    Boolean   @default(false)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([displayOrder])
+  @@index([published])
+  @@index([startDate(sort: Desc)])
+  @@map("education")
+}
+
+model Skill {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  category     String   // e.g., "Programming Languages", "Frameworks", "Tools"
+  proficiency  Int      @default(50) // 0-100 percentage
+  iconUrl      String?  @map("icon_url")
+  description  String?
+  displayOrder Int      @default(0) @map("display_order")
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category])
+  @@index([displayOrder])
+  @@index([published])
+  @@map("skills")
 }

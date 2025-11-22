@@ -181,17 +181,33 @@ export default function ProfilePage() {
           <CardContent>
             <h2 className="text-2xl font-bold mb-6">Personal Information</h2>
             <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded mb-4">
+                <input
+                  type="checkbox"
+                  id="availableForWork"
+                  checked={profileData.availableForWork}
+                  onChange={(e) => handleChange('availableForWork', e.target.checked)}
+                  className="w-5 h-5"
+                />
+                <label htmlFor="availableForWork" className="text-sm font-medium cursor-pointer">
+                  Available for opportunities
+                  <span className="block text-xs text-gray-600 mt-1">Shows a green dot indicator on the homepage</span>
+                </label>
+              </div>
+
               <Input
                 label="Full Name"
                 value={profileData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="John Doe"
+                helper="Displayed prominently on the homepage"
               />
               <Input
                 label="Title/Role"
                 value={profileData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
                 placeholder="AI Engineer & Software Developer"
+                helper="Your professional title shown on the homepage"
               />
               <div>
                 <label className="block text-sm font-medium mb-2">Bio</label>
@@ -202,6 +218,7 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 border border-gray-300 focus:outline-none focus:border-black"
                   placeholder="Write a brief bio about yourself..."
                 />
+                <p className="text-xs text-gray-500 mt-1">This appears on your homepage below your name and title</p>
               </div>
               <Input
                 label="Email"
@@ -223,44 +240,6 @@ export default function ProfilePage() {
                 onChange={(e) => handleChange('location', e.target.value)}
                 placeholder="San Francisco, CA"
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Hero Section */}
-        <Card>
-          <CardContent>
-            <h2 className="text-2xl font-bold mb-6">Homepage Hero Section</h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded">
-                <input
-                  type="checkbox"
-                  id="availableForWork"
-                  checked={profileData.availableForWork}
-                  onChange={(e) => handleChange('availableForWork', e.target.checked)}
-                  className="w-5 h-5"
-                />
-                <label htmlFor="availableForWork" className="text-sm font-medium cursor-pointer">
-                  Available for opportunities
-                  <span className="block text-xs text-gray-600 mt-1">Shows a green dot indicator on the homepage</span>
-                </label>
-              </div>
-              <Input
-                label="Hero Title"
-                value={profileData.heroTitle}
-                onChange={(e) => handleChange('heroTitle', e.target.value)}
-                placeholder="AI Engineer & Software Developer"
-              />
-              <div>
-                <label className="block text-sm font-medium mb-2">Hero Subtitle</label>
-                <textarea
-                  value={profileData.heroSubtitle}
-                  onChange={(e) => handleChange('heroSubtitle', e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 focus:outline-none focus:border-black"
-                  placeholder="Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies."
-                />
-              </div>
             </div>
           </CardContent>
         </Card>

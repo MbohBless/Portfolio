@@ -19,6 +19,9 @@ export default async function AdminLayout({
                 Admin Dashboard
               </Link>
               <nav className="flex gap-6">
+                <Link href="/admin/profile" className="text-sm text-gray-600 hover:text-black">
+                  Profile
+                </Link>
                 <Link href="/admin/projects" className="text-sm text-gray-600 hover:text-black">
                   Projects
                 </Link>
@@ -28,8 +31,14 @@ export default async function AdminLayout({
                 <Link href="/admin/blog" className="text-sm text-gray-600 hover:text-black">
                   Blog
                 </Link>
-                <Link href="/admin/profile" className="text-sm text-gray-600 hover:text-black">
-                  Profile
+                <Link href="/admin/experience" className="text-sm text-gray-600 hover:text-black">
+                  Experience
+                </Link>
+                <Link href="/admin/education" className="text-sm text-gray-600 hover:text-black">
+                  Education
+                </Link>
+                <Link href="/admin/skills" className="text-sm text-gray-600 hover:text-black">
+                  Skills
                 </Link>
               </nav>
             </div>
