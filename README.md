@@ -301,13 +301,3 @@ npm run db:generate
 | Domain | Namecheap | $1-2 |
 | **Total** | | **$1-27/mo** |
 
-## Contributing
-
-1. Create feature branch
-2. Make changes
-3. Run `npm run type-check && npm run lint`
-4. Submit pull request
-
-## License
-
-MIT
