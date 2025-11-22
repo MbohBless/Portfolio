@@ -61,11 +61,11 @@ export function ContactForm() {
       />
 
       <div>
-        <label className="block text-sm font-medium mb-2">Message</label>
+        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Message</label>
         <textarea
           value={formData.message}
           onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
-          className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400 dark:placeholder:text-gray-500 rounded-lg"
           rows={5}
           required
           disabled={status === 'loading'}
@@ -76,7 +76,9 @@ export function ContactForm() {
       {message && (
         <div
           className={`p-4 rounded ${
-            status === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            status === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
           }`}
         >
           {message}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,14 +10,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
 
-    // TODO: Integrate with email service (Resend, SendGrid, or Nodemailer)
-    // For now, just log to console
-    console.log('📧 Contact Form Submission:')
-    console.log(`Name: ${name}`)
-    console.log(`Email: ${email}`)
-    console.log(`Message: ${message}`)
+    // Save to database
+    const contact = await prisma.contact.create({
+      data: {
+        name,
+        email,
+        message,
+        read: false,
+      },
+    })
 
-    // You can integrate email service here:
+    // Log to console for debugging
+    console.log('📧 Contact Form Submission saved:', contact.id)
+
+    // TODO: Integrate with email service (Resend, SendGrid, or Nodemailer)
     // Example with Resend:
     // await resend.emails.send({
     //   from: 'noreply@yourdomain.com',
@@ -27,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Message received! (Currently logging to console)',
+      message: 'Message received! We\'ll get back to you soon.',
     })
   } catch (error) {
     console.error('Contact form error:', error)

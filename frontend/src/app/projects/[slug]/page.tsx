@@ -3,9 +3,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const project = await prisma.project.findUnique({
-    where: { slug: params.slug, published: true },
+    where: { slug, published: true },
   })
 
   if (!project) {
@@ -18,9 +19,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function ProjectPage({ params }: { params: { slug: string } }) {
+export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const project = await prisma.project.findUnique({
-    where: { slug: params.slug, published: true },
+    where: { slug, published: true },
   })
 
   if (!project) {

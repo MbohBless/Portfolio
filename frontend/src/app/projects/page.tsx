@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/Card'
+import { NetworkAnimation } from '@/components/animations/NetworkAnimation'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,8 +13,9 @@ export default async function ProjectsPage() {
   })
 
   return (
-    <main className="flex-1">
-      <section className="container mx-auto px-6 py-20 border-b border-gray-200">
+    <main className="flex-1 relative">
+      <NetworkAnimation />
+      <section className="container mx-auto px-6 py-20 border-b border-gray-200 dark:border-gray-800 relative z-10">
         <div className="max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
             Projects
@@ -25,7 +27,7 @@ export default async function ProjectsPage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-6 py-20">
+      <section className="container mx-auto px-6 py-20 relative z-10">
         {projects.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (

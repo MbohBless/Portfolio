@@ -14,7 +14,8 @@ export default function ProfilePage() {
     email: 'contact@example.com',
     phone: '',
     location: '',
-    
+    resumeUrl: '',
+
     // Social Links
     githubUrl: '',
     linkedinUrl: '',
@@ -239,6 +240,13 @@ export default function ProfilePage() {
                 value={profileData.location}
                 onChange={(e) => handleChange('location', e.target.value)}
                 placeholder="San Francisco, CA"
+              />
+              <Input
+                label="Resume/CV URL"
+                value={profileData.resumeUrl}
+                onChange={(e) => handleChange('resumeUrl', e.target.value)}
+                placeholder="https://example.com/resume.pdf"
+                helper="Upload your resume to Supabase storage or provide a link"
               />
             </div>
           </CardContent>

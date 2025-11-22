@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/Card'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
@@ -20,8 +20,10 @@ interface BlogPost {
   publishedAt: Date | null
 }
 
-export default function EditBlogPostPage({ params }: { params: { id: string } }) {
+export default function EditBlogPostPage() {
   const router = useRouter()
+  const params = useParams()
+  const postId = params.id as string
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -39,12 +41,14 @@ export default function EditBlogPostPage({ params }: { params: { id: string } })
   })
 
   useEffect(() => {
-    loadPost()
-  }, [])
+    if (postId) {
+      loadPost()
+    }
+  }, [postId])
 
   const loadPost = async () => {
     setIsLoading(true)
-    const result = await getBlogPost(params.id)
+    const result = await getBlogPost(postId)
 
     if (result.success && result.data) {
       const post = result.data as BlogPost
@@ -70,7 +74,7 @@ export default function EditBlogPostPage({ params }: { params: { id: string } })
     setIsSaving(true)
     setMessage('')
 
-    const result = await updateBlogPost(params.id, formData)
+    const result = await updateBlogPost(postId, formData)
 
     if (result.success) {
       setMessage('Blog post updated successfully!')
@@ -89,7 +93,7 @@ export default function EditBlogPostPage({ params }: { params: { id: string } })
     }
 
     setIsSaving(true)
-    const result = await deleteBlogPost(params.id)
+    const result = await deleteBlogPost(postId)
 
     if (result.success) {
       router.push('/admin/blog')

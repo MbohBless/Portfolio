@@ -7,10 +7,12 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
+import { CodeAnimation } from '@/components/animations/CodeAnimation'
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const post = await prisma.blogPost.findUnique({
-    where: { slug: params.slug, published: true },
+    where: { slug, published: true },
   })
 
   if (!post) {
@@ -23,9 +25,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const post = await prisma.blogPost.findUnique({
-    where: { slug: params.slug, published: true },
+    where: { slug, published: true },
   })
 
   if (!post) {
@@ -36,8 +39,9 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   incrementBlogViews(post.id).catch(() => {})
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b">
+    <div className="min-h-screen relative">
+      <CodeAnimation />
+      <header className="border-b relative z-10">
         <nav className="container mx-auto px-4 py-4">
           <Link href="/blog" className="text-blue-600 hover:underline">
             ← Back to Blog

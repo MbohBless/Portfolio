@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { Card, CardContent } from '@/components/Card'
+import { CodeAnimation } from '@/components/animations/CodeAnimation'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,20 +30,21 @@ export default async function BlogPage({
   const totalPages = Math.ceil(totalCount / pageSize)
 
   return (
-    <main className="flex-1">
-      <section className="container mx-auto px-6 py-20 border-b border-gray-200">
+    <main className="flex-1 relative">
+      <CodeAnimation />
+      <section className="container mx-auto px-6 py-20 border-b border-gray-200 dark:border-gray-800 relative z-10">
         <div className="max-w-4xl">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
             Blog
           </h1>
-          <p className="text-xl text-gray-600">
-            Technical articles, tutorials, and thoughts on AI, software engineering, 
+          <p className="text-xl text-gray-600 dark:text-gray-400">
+            Technical articles, tutorials, and thoughts on AI, software engineering,
             and emerging technologies.
           </p>
         </div>
       </section>
 
-      <section className="container mx-auto px-6 py-20">
+      <section className="container mx-auto px-6 py-20 relative z-10">
         {posts.length > 0 ? (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">

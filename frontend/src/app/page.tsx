@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/Card'
 import { Button } from '@/components/Button'
+import { ContactForm } from '@/components/ContactForm'
+import { HeroBackground } from '@/components/HeroBackground'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,6 +70,7 @@ export default async function Home() {
     phone: null,
     location: null,
     profileImageUrl: null,
+    resumeUrl: null,
     githubUrl: 'https://github.com',
     linkedinUrl: null,
     twitterUrl: null,
@@ -79,8 +82,9 @@ export default async function Home() {
   return (
     <main className="flex-1">
       {/* Hero Section */}
-      <section className="container mx-auto px-6 py-32 md:py-40">
-        <div className="max-w-6xl mx-auto">
+      <section className="relative container mx-auto px-6 py-32 md:py-40">
+        <HeroBackground />
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex flex-col md:flex-row gap-12 items-center justify-between animate-fade-in">
             {/* Profile Information */}
             <div className="flex-1 space-y-6 order-2 md:order-1">
@@ -185,6 +189,18 @@ export default async function Home() {
                     Research Papers
                   </Button>
                 </Link>
+                {profileData.resumeUrl && (
+                  <a
+                    href={profileData.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                  >
+                    <Button size="lg" variant="ghost">
+                      📄 Download Resume
+                    </Button>
+                  </a>
+                )}
               </div>
             </div>
 
@@ -514,28 +530,26 @@ export default async function Home() {
 
           <div className="space-y-6 max-w-3xl">
             {recentPublications.map((pub) => (
-              <Link key={pub.id} href={`/publications/${pub.slug}`}>
-                <Card hoverable>
-                  <CardContent>
-                    <div className="flex items-start gap-4">
-                      <div className="text-gray-400 font-bold text-lg min-w-[4rem]">
-                        {pub.year}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold mb-2 hover:underline">
-                          {pub.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {pub.authors.join(', ')}
-                        </p>
-                        {pub.venue && (
-                          <p className="text-sm text-gray-500 italic">{pub.venue}</p>
-                        )}
-                      </div>
+              <Card key={pub.id}>
+                <CardContent>
+                  <div className="flex items-start gap-4">
+                    <div className="text-gray-400 dark:text-gray-500 font-bold text-lg min-w-[4rem]">
+                      {pub.year}
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-2 text-black dark:text-white">
+                        {pub.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        {pub.authors.join(', ')}
+                      </p>
+                      {pub.venue && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 italic">{pub.venue}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
@@ -587,27 +601,17 @@ export default async function Home() {
         </section>
       )}
 
-      {/* CTA Section */}
+      {/* Contact Section */}
       <section className="container mx-auto px-6 py-32 border-t border-gray-200">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-          <h2 className="text-4xl font-bold">Let's Work Together</h2>
-          <p className="text-xl text-gray-600">
-            Interested in collaboration or have a project in mind? Let's connect.
-          </p>
-          <div className="flex justify-center gap-4 pt-4">
-            <a href={`mailto:${profileData.email}`}>
-              <Button size="lg" variant="primary">
-                Get in Touch
-              </Button>
-            </a>
-            {profileData.githubUrl && (
-              <a href={profileData.githubUrl} target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="secondary">
-                  View GitHub
-                </Button>
-              </a>
-            )}
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Get In Touch</h2>
+            <p className="text-xl text-gray-600">
+              Have a project in mind or want to collaborate? I'd love to hear from you.
+            </p>
           </div>
+
+          <ContactForm />
         </div>
       </section>
     </main>

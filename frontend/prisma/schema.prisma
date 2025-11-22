@@ -56,6 +56,7 @@ model Profile {
   phone             String?   @db.VarChar(50)
   location          String?   @db.VarChar(255)
   profileImageUrl   String?   @map("profile_image_url")
+  resumeUrl         String?   @map("resume_url")
   heroTitle         String    @map("hero_title") @db.VarChar(255)
   heroSubtitle      String    @map("hero_subtitle")
   availableForWork  Boolean?  @default(true) @map("available_for_work")
@@ -191,4 +192,17 @@ model Skill {
   @@index([displayOrder])
   @@index([published])
   @@map("skills")
+}
+
+model Contact {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  email     String   @db.VarChar(255)
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([read])
+  @@map("contacts")
 }
