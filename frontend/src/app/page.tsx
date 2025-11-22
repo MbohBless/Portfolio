@@ -6,8 +6,8 @@ import { Button } from '@/components/Button'
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  // Fetch featured content
-  const [featuredProjects, recentPublications, recentPosts] = await Promise.all([
+  // Fetch featured content and profile
+  const [featuredProjects, recentPublications, recentPosts, profile] = await Promise.all([
     prisma.project.findMany({
       where: { published: true },
       orderBy: { displayOrder: 'asc' },
@@ -23,7 +23,21 @@ export default async function Home() {
       orderBy: { publishedAt: 'desc' },
       take: 3,
     }),
+    prisma.profile.findFirst(),
   ])
+
+  // Default profile values if none exists
+  const defaultProfile = {
+    name: 'Mbou Bless Pearl N',
+    title: 'AI Engineer & Software Developer',
+    heroTitle: 'AI Engineer &\nSoftware Developer',
+    heroSubtitle: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
+    availableForWork: true,
+    email: 'contact@example.com',
+    githubUrl: 'https://github.com',
+  }
+
+  const profileData = profile || defaultProfile
 
   return (
     <main className="flex-1">
@@ -31,18 +45,19 @@ export default async function Home() {
       <section className="container mx-auto px-6 py-32 md:py-40">
         <div className="max-w-4xl">
           <div className="space-y-6 animate-fade-in">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span>Available for opportunities</span>
-            </div>
+            {profileData.availableForWork && (
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span>Available for opportunities</span>
+              </div>
+            )}
             
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-              AI Engineer &<br />Software Developer
+              {profileData.heroTitle}
             </h1>
             
             <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
-              Building intelligent systems and scalable software solutions.
-              Specialized in machine learning, artificial intelligence, and modern web technologies.
+              {profileData.heroSubtitle}
             </p>
             
             <div className="flex flex-wrap gap-4 pt-4">
@@ -162,7 +177,7 @@ export default async function Home() {
                 <Card hoverable className="h-full">
                   <CardContent>
                     <div className="text-sm text-gray-500 mb-3">
-                      {post.publishedAt 
+                      {post.publishedAt
                         ? new Date(post.publishedAt).toLocaleDateString('en-US', { 
                             month: 'short', 
                             day: 'numeric', 
@@ -197,16 +212,18 @@ export default async function Home() {
             Interested in collaboration or have a project in mind? Let's connect.
           </p>
           <div className="flex justify-center gap-4 pt-4">
-            <a href="mailto:contact@example.com">
+            <a href={`mailto:${profileData.email}`}>
               <Button size="lg" variant="primary">
                 Get in Touch
               </Button>
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" variant="secondary">
-                View GitHub
-              </Button>
-            </a>
+            {profileData.githubUrl && (
+              <a href={profileData.githubUrl} target="_blank" rel="noopener noreferrer">
+                <Button size="lg" variant="secondary">
+                  View GitHub
+                </Button>
+              </a>
+            )}
           </div>
         </div>
       </section>

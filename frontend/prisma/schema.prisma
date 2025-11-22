@@ -1,6 +1,3 @@
-// Prisma Schema for Portfolio System
-// Converted from SQL migrations
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,23 +7,68 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Users table (admin users)
-model User {
-  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email      String      @unique
-  name       String?
-  avatarUrl  String?     @map("avatar_url")
-  role       String      @default("admin")
-  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+model BlogPost {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title          String
+  slug           String    @unique
+  excerpt        String?
+  contentUrl     String?   @map("content_url")
+  coverImageUrl  String?   @map("cover_image_url")
+  tags           String[]  @default([])
+  published      Boolean   @default(false)
+  publishedAt    DateTime? @map("published_at") @db.Timestamptz(6)
+  readingTime    Int       @default(0) @map("reading_time")
+  views          Int       @default(0)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @map("updated_at") @db.Timestamptz(6)
 
-  mediaFiles MediaFile[]
-
-  @@index([email])
-  @@map("users")
+  @@index([createdAt(sort: Desc)])
+  @@index([publishedAt(sort: Desc)])
+  @@index([slug])
+  @@map("blog_posts")
 }
 
-// Projects table
+model MediaFile {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  originalName String   @map("original_name")
+  storagePath  String   @map("storage_path")
+  url          String
+  mimeType     String   @map("mime_type")
+  sizeBytes    BigInt   @map("size_bytes")
+  uploadedBy   String?  @map("uploaded_by") @db.Uuid
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  users        User?    @relation(fields: [uploadedBy], references: [id])
+
+  @@index([createdAt(sort: Desc)])
+  @@index([mimeType])
+  @@index([uploadedBy])
+  @@map("media_files")
+}
+
+model Profile {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String    @db.VarChar(255)
+  title             String    @db.VarChar(255)
+  bio               String?
+  email             String    @db.VarChar(255)
+  phone             String?   @db.VarChar(50)
+  location          String?   @db.VarChar(255)
+  profileImageUrl   String?   @map("profile_image_url")
+  heroTitle         String    @map("hero_title") @db.VarChar(255)
+  heroSubtitle      String    @map("hero_subtitle")
+  availableForWork  Boolean?  @default(true) @map("available_for_work")
+  githubUrl         String?   @map("github_url")
+  linkedinUrl       String?   @map("linkedin_url")
+  twitterUrl        String?   @map("twitter_url")
+  websiteUrl        String?   @map("website_url")
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([email], map: "idx_profile_email")
+  @@map("profile")
+}
+
 model Project {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title        String
@@ -40,15 +82,14 @@ model Project {
   published    Boolean  @default(false)
   displayOrder Int      @default(0) @map("display_order")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt    DateTime @map("updated_at") @db.Timestamptz(6)
 
-  @@index([slug])
-  @@index([published])
   @@index([displayOrder])
+  @@index([published])
+  @@index([slug])
   @@map("projects")
 }
 
-// Publications table
 model Publication {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title     String
@@ -63,52 +104,24 @@ model Publication {
   tags      String[] @default([])
   published Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt DateTime @map("updated_at") @db.Timestamptz(6)
 
+  @@index([published])
   @@index([slug])
   @@index([year(sort: Desc)])
-  @@index([published])
   @@map("publications")
 }
 
-// Blog posts table
-model BlogPost {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title         String
-  slug          String    @unique
-  excerpt       String?
-  contentUrl    String?   @map("content_url")
-  coverImageUrl String?   @map("cover_image_url")
-  tags          String[]  @default([])
-  published     Boolean   @default(false)
-  publishedAt   DateTime? @map("published_at") @db.Timestamptz(6)
-  readingTime   Int       @default(0) @map("reading_time")
-  views         Int       @default(0)
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+model User {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String      @unique
+  name       String?
+  avatarUrl  String?     @map("avatar_url")
+  role       String      @default("admin")
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @map("updated_at") @db.Timestamptz(6)
+  mediaFiles MediaFile[]
 
-  @@index([slug])
-  @@index([publishedAt(sort: Desc)])
-  @@index([createdAt(sort: Desc)])
-  @@map("blog_posts")
-}
-
-// Media files table
-model MediaFile {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  originalName String   @map("original_name")
-  storagePath  String   @map("storage_path")
-  url          String
-  mimeType     String   @map("mime_type")
-  sizeBytes    BigInt   @map("size_bytes")
-  uploadedBy   String?  @map("uploaded_by") @db.Uuid
-  metadata     Json     @default("{}")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  user User? @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
-
-  @@index([uploadedBy])
-  @@index([mimeType])
-  @@index([createdAt(sort: Desc)])
-  @@map("media_files")
+  @@index([email])
+  @@map("users")
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/Card'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
@@ -8,51 +8,119 @@ import { Input } from '@/components/Input'
 export default function ProfilePage() {
   const [profileData, setProfileData] = useState({
     // Personal Info
-    name: 'Your Name',
+    name: 'Mbou Bless Pearl N',
     title: 'AI Engineer & Software Developer',
-    bio: 'Write a brief bio about yourself...',
-    email: 'your.email@example.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
+    bio: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
+    email: 'contact@example.com',
+    phone: '',
+    location: '',
     
     // Social Links
-    github: 'https://github.com/yourusername',
-    linkedin: 'https://linkedin.com/in/yourusername',
-    twitter: 'https://twitter.com/yourusername',
-    website: 'https://yourwebsite.com',
+    githubUrl: '',
+    linkedinUrl: '',
+    twitterUrl: '',
+    websiteUrl: '',
     
     // Hero Section
-    heroTitle: 'Building AI Solutions',
-    heroSubtitle: 'Specializing in machine learning, deep learning, and software engineering',
+    heroTitle: 'AI Engineer & Software Developer',
+    heroSubtitle: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
+    availableForWork: true,
     
     // Profile Image
-    profileImage: '',
+    profileImageUrl: '/images/profile.png',
   })
 
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [message, setMessage] = useState('')
 
-  const handleChange = (field: string, value: string) => {
+  // Load profile data on mount
+  useEffect(() => {
+    loadProfile()
+  }, [])
+
+  const loadProfile = async () => {
+    try {
+      const response = await fetch('/api/profile')
+      if (response.ok) {
+        const data = await response.json()
+        setProfileData(data)
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error)
+      setMessage('Error loading profile data')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleChange = (field: string, value: string | boolean) => {
     setProfileData(prev => ({ ...prev, [field]: value }))
   }
 
   const handleSave = async () => {
     setIsSaving(true)
-    // TODO: Implement save to database
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsSaving(false)
-    alert('Profile saved! (Note: Backend implementation pending)')
+    setMessage('')
+    
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      })
+
+      if (response.ok) {
+        setMessage('Profile saved successfully!')
+        setTimeout(() => setMessage(''), 3000)
+      } else {
+        const error = await response.json()
+        setMessage(error.error || 'Failed to save profile')
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error)
+      setMessage('Error saving profile')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // TODO: Implement image upload
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfileData(prev => ({ ...prev, profileImage: reader.result as string }))
+      const formData = new FormData()
+      formData.append('file', file)
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setProfileData(prev => ({ ...prev, profileImageUrl: data.url }))
+          setMessage('Image uploaded successfully!')
+          setTimeout(() => setMessage(''), 3000)
+        } else {
+          setMessage('Failed to upload image')
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        setMessage('Error uploading image')
       }
-      reader.readAsDataURL(file)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <main className="container mx-auto px-6 py-12">
+        <div className="text-center py-12">
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -62,6 +130,14 @@ export default function ProfilePage() {
         <p className="text-gray-600">Manage your personal information and social links</p>
       </div>
 
+      {message && (
+        <div className={`mb-6 p-4 rounded ${
+          message.includes('success') ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          {message}
+        </div>
+      )}
+
       <div className="max-w-4xl space-y-8">
         {/* Profile Image */}
         <Card>
@@ -69,9 +145,9 @@ export default function ProfilePage() {
             <h2 className="text-2xl font-bold mb-6">Profile Photo</h2>
             <div className="flex items-center gap-8">
               <div className="w-32 h-32 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-                {profileData.profileImage ? (
+                {profileData.profileImageUrl ? (
                   <img 
-                    src={profileData.profileImage} 
+                    src={profileData.profileImageUrl} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
                   />
@@ -156,20 +232,33 @@ export default function ProfilePage() {
           <CardContent>
             <h2 className="text-2xl font-bold mb-6">Homepage Hero Section</h2>
             <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded">
+                <input
+                  type="checkbox"
+                  id="availableForWork"
+                  checked={profileData.availableForWork}
+                  onChange={(e) => handleChange('availableForWork', e.target.checked)}
+                  className="w-5 h-5"
+                />
+                <label htmlFor="availableForWork" className="text-sm font-medium cursor-pointer">
+                  Available for opportunities
+                  <span className="block text-xs text-gray-600 mt-1">Shows a green dot indicator on the homepage</span>
+                </label>
+              </div>
               <Input
                 label="Hero Title"
                 value={profileData.heroTitle}
                 onChange={(e) => handleChange('heroTitle', e.target.value)}
-                placeholder="Building AI Solutions"
+                placeholder="AI Engineer & Software Developer"
               />
               <div>
                 <label className="block text-sm font-medium mb-2">Hero Subtitle</label>
                 <textarea
                   value={profileData.heroSubtitle}
                   onChange={(e) => handleChange('heroSubtitle', e.target.value)}
-                  rows={2}
+                  rows={3}
                   className="w-full px-4 py-3 border border-gray-300 focus:outline-none focus:border-black"
-                  placeholder="Specializing in machine learning, deep learning, and software engineering"
+                  placeholder="Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies."
                 />
               </div>
             </div>
@@ -183,26 +272,26 @@ export default function ProfilePage() {
             <div className="space-y-4">
               <Input
                 label="GitHub"
-                value={profileData.github}
-                onChange={(e) => handleChange('github', e.target.value)}
+                value={profileData.githubUrl}
+                onChange={(e) => handleChange('githubUrl', e.target.value)}
                 placeholder="https://github.com/yourusername"
               />
               <Input
                 label="LinkedIn"
-                value={profileData.linkedin}
-                onChange={(e) => handleChange('linkedin', e.target.value)}
+                value={profileData.linkedinUrl}
+                onChange={(e) => handleChange('linkedinUrl', e.target.value)}
                 placeholder="https://linkedin.com/in/yourusername"
               />
               <Input
                 label="Twitter/X"
-                value={profileData.twitter}
-                onChange={(e) => handleChange('twitter', e.target.value)}
+                value={profileData.twitterUrl}
+                onChange={(e) => handleChange('twitterUrl', e.target.value)}
                 placeholder="https://twitter.com/yourusername"
               />
               <Input
                 label="Personal Website"
-                value={profileData.website}
-                onChange={(e) => handleChange('website', e.target.value)}
+                value={profileData.websiteUrl}
+                onChange={(e) => handleChange('websiteUrl', e.target.value)}
                 placeholder="https://yourwebsite.com"
               />
             </div>
@@ -221,27 +310,11 @@ export default function ProfilePage() {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => window.location.reload()}
+            onClick={loadProfile}
           >
-            Cancel
+            Reset
           </Button>
         </div>
-
-        {/* Note */}
-        <Card className="bg-yellow-50 border-yellow-200">
-          <CardContent>
-            <div className="flex gap-3">
-              <div className="text-2xl">💡</div>
-              <div>
-                <h3 className="font-semibold mb-1">Coming Soon</h3>
-                <p className="text-sm text-gray-700">
-                  Profile data saving will be implemented in the next phase. For now, you can preview how the form works.
-                  The data will be stored in the database and displayed on your public portfolio pages.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </main>
   )
