@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ConditionalLayout } from '@/components/ConditionalLayout'
 
 export const metadata: Metadata = {
-  title: 'Portfolio',
-  description: 'Personal portfolio and blog',
+  title: 'Portfolio - AI Engineer & Software Developer',
+  description: 'AI Engineer and Software Developer specializing in machine learning, artificial intelligence, and scalable software solutions.',
 }
 
 export default function RootLayout({
@@ -13,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="flex flex-col min-h-screen">
+        <ConditionalLayout>
+          {children}
+        </ConditionalLayout>
+      </body>
     </html>
   )
 }

@@ -1,90 +1,215 @@
 import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
+import { Card, CardContent } from '@/components/Card'
+import { Button } from '@/components/Button'
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+export default async function Home() {
+  // Fetch featured content
+  const [featuredProjects, recentPublications, recentPosts] = await Promise.all([
+    prisma.project.findMany({
+      where: { published: true },
+      orderBy: { displayOrder: 'asc' },
+      take: 3,
+    }),
+    prisma.publication.findMany({
+      where: { published: true },
+      orderBy: { year: 'desc' },
+      take: 3,
+    }),
+    prisma.blogPost.findMany({
+      where: { published: true },
+      orderBy: { publishedAt: 'desc' },
+      take: 3,
+    }),
+  ])
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b">
-        <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">
-            Portfolio
-          </Link>
-          <div className="flex gap-6">
-            <Link href="/projects" className="hover:underline">
-              Projects
-            </Link>
-            <Link href="/publications" className="hover:underline">
-              Publications
-            </Link>
-            <Link href="/blog" className="hover:underline">
-              Blog
-            </Link>
-            <Link href="/admin" className="hover:underline text-blue-600">
-              Admin
+    <main className="flex-1">
+      {/* Hero Section */}
+      <section className="container mx-auto px-6 py-32 md:py-40">
+        <div className="max-w-4xl">
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span>Available for opportunities</span>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+              AI Engineer &<br />Software Developer
+            </h1>
+            
+            <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
+              Building intelligent systems and scalable software solutions.
+              Specialized in machine learning, artificial intelligence, and modern web technologies.
+            </p>
+            
+            <div className="flex flex-wrap gap-4 pt-4">
+              <Link href="/projects">
+                <Button size="lg" variant="primary">
+                  View Projects
+                </Button>
+              </Link>
+              <Link href="/publications">
+                <Button size="lg" variant="secondary">
+                  Research Papers
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Projects */}
+      {featuredProjects.length > 0 && (
+        <section className="container mx-auto px-6 py-20 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Featured Projects</h2>
+              <p className="text-gray-600">Selected works showcasing technical expertise</p>
+            </div>
+            <Link href="/projects" className="text-sm font-medium hover:underline">
+              View all →
             </Link>
           </div>
-        </nav>
-      </header>
 
-      <main className="flex-1 container mx-auto px-4 py-16">
-        <div className="max-w-3xl mx-auto text-center space-y-8">
-          <h1 className="text-5xl font-bold tracking-tight">
-            Welcome to My Portfolio
-          </h1>
+          <div className="grid md:grid-cols-3 gap-6">
+            {featuredProjects.map((project) => (
+              <Link key={project.id} href={`/projects/${project.slug}`}>
+                <Card hoverable className="h-full">
+                  <CardContent>
+                    <h3 className="text-xl font-semibold mb-3">{project.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {project.techStack.slice(0, 3).map((tech) => (
+                        <span
+                          key={tech}
+                          className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recent Publications */}
+      {recentPublications.length > 0 && (
+        <section className="container mx-auto px-6 py-20 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Recent Research</h2>
+              <p className="text-gray-600">Latest publications and academic work</p>
+            </div>
+            <Link href="/publications" className="text-sm font-medium hover:underline">
+              View all →
+            </Link>
+          </div>
+
+          <div className="space-y-6 max-w-3xl">
+            {recentPublications.map((pub) => (
+              <Link key={pub.id} href={`/publications/${pub.slug}`}>
+                <Card hoverable>
+                  <CardContent>
+                    <div className="flex items-start gap-4">
+                      <div className="text-gray-400 font-bold text-lg min-w-[4rem]">
+                        {pub.year}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-2 hover:underline">
+                          {pub.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {pub.authors.join(', ')}
+                        </p>
+                        {pub.venue && (
+                          <p className="text-sm text-gray-500 italic">{pub.venue}</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recent Blog Posts */}
+      {recentPosts.length > 0 && (
+        <section className="container mx-auto px-6 py-20 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Latest Writing</h2>
+              <p className="text-gray-600">Thoughts on AI, engineering, and technology</p>
+            </div>
+            <Link href="/blog" className="text-sm font-medium hover:underline">
+              View all →
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {recentPosts.map((post) => (
+              <Link key={post.id} href={`/blog/${post.slug}`}>
+                <Card hoverable className="h-full">
+                  <CardContent>
+                    <div className="text-sm text-gray-500 mb-3">
+                      {post.publishedAt 
+                        ? new Date(post.publishedAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })
+                        : 'Draft'}
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    {post.excerpt && (
+                      <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+                        {post.excerpt}
+                      </p>
+                    )}
+                    <div className="text-xs text-gray-500">
+                      {post.readingTime} min read
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* CTA Section */}
+      <section className="container mx-auto px-6 py-32 border-t border-gray-200">
+        <div className="max-w-3xl mx-auto text-center space-y-6">
+          <h2 className="text-4xl font-bold">Let's Work Together</h2>
           <p className="text-xl text-gray-600">
-            Software engineer, researcher, and technical writer.
+            Interested in collaboration or have a project in mind? Let's connect.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/projects"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              View Projects
-            </Link>
-            <Link
-              href="/blog"
-              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              Read Blog
-            </Link>
+          <div className="flex justify-center gap-4 pt-4">
+            <a href="mailto:contact@example.com">
+              <Button size="lg" variant="primary">
+                Get in Touch
+              </Button>
+            </a>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+              <Button size="lg" variant="secondary">
+                View GitHub
+              </Button>
+            </a>
           </div>
         </div>
-
-        <div className="mt-24 grid md:grid-cols-3 gap-8">
-          <div className="p-6 border rounded-lg">
-            <h3 className="text-xl font-semibold mb-2">Projects</h3>
-            <p className="text-gray-600">
-              Explore my open-source projects and side work.
-            </p>
-            <Link href="/projects" className="text-blue-600 mt-4 inline-block">
-              View all →
-            </Link>
-          </div>
-          <div className="p-6 border rounded-lg">
-            <h3 className="text-xl font-semibold mb-2">Publications</h3>
-            <p className="text-gray-600">
-              Research papers and academic publications.
-            </p>
-            <Link href="/publications" className="text-blue-600 mt-4 inline-block">
-              View all →
-            </Link>
-          </div>
-          <div className="p-6 border rounded-lg">
-            <h3 className="text-xl font-semibold mb-2">Blog</h3>
-            <p className="text-gray-600">
-              Technical writing and thoughts on software.
-            </p>
-            <Link href="/blog" className="text-blue-600 mt-4 inline-block">
-              View all →
-            </Link>
-          </div>
-        </div>
-      </main>
-
-      <footer className="border-t mt-auto">
-        <div className="container mx-auto px-4 py-8 text-center text-gray-600">
-          <p>© {new Date().getFullYear()} Portfolio. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
+      </section>
+    </main>
   )
 }

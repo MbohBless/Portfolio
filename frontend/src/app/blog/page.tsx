@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import { Card, CardContent } from '@/components/Card'
 
-export const dynamic = 'force-dynamic' // Render on-demand, skip build-time pre-rendering
+export const dynamic = 'force-dynamic'
 
 export default async function BlogPage({
   searchParams,
@@ -10,7 +11,7 @@ export default async function BlogPage({
   searchParams: { page?: string }
 }) {
   const page = Number(searchParams.page) || 1
-  const pageSize = 10
+  const pageSize = 12
   const skip = (page - 1) * pageSize
 
   const [posts, totalCount] = await Promise.all([
@@ -28,92 +29,102 @@ export default async function BlogPage({
   const totalPages = Math.ceil(totalCount / pageSize)
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b">
-        <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">
-            Portfolio
-          </Link>
-          <div className="flex gap-6">
-            <Link href="/projects" className="hover:underline">
-              Projects
-            </Link>
-            <Link href="/publications" className="hover:underline">
-              Publications
-            </Link>
-            <Link href="/blog" className="hover:underline font-semibold">
-              Blog
-            </Link>
-          </div>
-        </nav>
-      </header>
-
-      <main className="container mx-auto px-4 py-16 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8">Blog</h1>
-
-        <div className="space-y-12">
-          {posts.map((post: typeof posts[number]) => (
-            <article key={post.id} className="pb-8 border-b">
-              <Link
-                href={`/blog/${post.slug}`}
-                className="text-3xl font-bold hover:text-blue-600 block mb-2"
-              >
-                {post.title}
-              </Link>
-              <div className="flex gap-4 text-gray-500 text-sm mb-4">
-                {post.publishedAt && (
-                  <time>{formatDate(post.publishedAt.toISOString())}</time>
-                )}
-                <span>{post.readingTime} min read</span>
-                <span>{post.views} views</span>
-              </div>
-              {post.excerpt && (
-                <p className="text-gray-600 mb-4">{post.excerpt}</p>
-              )}
-              <div className="flex gap-2">
-                {post.tags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </article>
-          ))}
+    <main className="flex-1">
+      <section className="container mx-auto px-6 py-20 border-b border-gray-200">
+        <div className="max-w-4xl">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+            Blog
+          </h1>
+          <p className="text-xl text-gray-600">
+            Technical articles, tutorials, and thoughts on AI, software engineering, 
+            and emerging technologies.
+          </p>
         </div>
+      </section>
 
-        {posts.length === 0 && (
-          <div className="text-center py-16 text-gray-500">
-            No blog posts yet. Check back soon!
+      <section className="container mx-auto px-6 py-20">
+        {posts.length > 0 ? (
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+              {posts.map((post) => (
+                <Link key={post.id} href={`/blog/${post.slug}`}>
+                  <Card hoverable className="h-full flex flex-col">
+                    {post.coverImageUrl && (
+                      <div className="relative h-48 bg-gray-100">
+                        <img 
+                          src={post.coverImageUrl} 
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <CardContent className="flex-1 flex flex-col">
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                        {post.publishedAt && (
+                          <time>{formatDate(post.publishedAt.toISOString())}</time>
+                        )}
+                        <span>•</span>
+                        <span>{post.readingTime} min read</span>
+                      </div>
+
+                      <h2 className="text-xl font-bold mb-3 line-clamp-2 flex-1">
+                        {post.title}
+                      </h2>
+
+                      {post.excerpt && (
+                        <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+                          {post.excerpt}
+                        </p>
+                      )}
+
+                      {post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {post.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4">
+                {page > 1 && (
+                  <Link
+                    href={`/blog?page=${page - 1}`}
+                    className="px-6 py-2 border border-gray-300 hover:bg-gray-50 transition-colors font-medium text-sm"
+                  >
+                    ← Previous
+                  </Link>
+                )}
+                <span className="text-sm text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+                {page < totalPages && (
+                  <Link
+                    href={`/blog?page=${page + 1}`}
+                    className="px-6 py-2 border border-gray-300 hover:bg-gray-50 transition-colors font-medium text-sm"
+                  >
+                    Next →
+                  </Link>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-32">
+            <p className="text-gray-500 text-lg">No blog posts yet.</p>
           </div>
         )}
-
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-12">
-            {page > 1 && (
-              <Link
-                href={`/blog?page=${page - 1}`}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
-              >
-                Previous
-              </Link>
-            )}
-            <span className="px-4 py-2">
-              Page {page} of {totalPages}
-            </span>
-            {page < totalPages && (
-              <Link
-                href={`/blog?page=${page + 1}`}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
-              >
-                Next
-              </Link>
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+      </section>
+    </main>
   )
 }

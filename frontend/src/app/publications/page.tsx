@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { Card, CardContent } from '@/components/Card'
 
-export const dynamic = 'force-dynamic' // Render on-demand, skip build-time pre-rendering
+export const dynamic = 'force-dynamic'
 
 export default async function PublicationsPage() {
   const publications = await prisma.publication.findMany({
@@ -10,7 +11,7 @@ export default async function PublicationsPage() {
   })
 
   // Group publications by year
-  const byYear = publications.reduce((acc: Record<number, typeof publications>, pub: typeof publications[number]) => {
+  const byYear = publications.reduce((acc: Record<number, typeof publications>, pub) => {
     if (!acc[pub.year]) acc[pub.year] = []
     acc[pub.year].push(pub)
     return acc
@@ -21,103 +22,98 @@ export default async function PublicationsPage() {
     .sort((a, b) => b - a)
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b">
-        <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">
-            Portfolio
-          </Link>
-          <div className="flex gap-6">
-            <Link href="/projects" className="hover:underline">
-              Projects
-            </Link>
-            <Link href="/publications" className="hover:underline font-semibold">
-              Publications
-            </Link>
-            <Link href="/blog" className="hover:underline">
-              Blog
-            </Link>
+    <main className="flex-1">
+      <section className="container mx-auto px-6 py-20 border-b border-gray-200">
+        <div className="max-w-4xl">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+            Research & Publications
+          </h1>
+          <p className="text-xl text-gray-600">
+            Academic papers, research publications, and technical contributions 
+            to the field of artificial intelligence and machine learning.
+          </p>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-6 py-20">
+        {years.length > 0 ? (
+          <div className="max-w-5xl space-y-16">
+            {years.map((year) => (
+              <div key={year}>
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="text-3xl font-bold">{year}</h2>
+                  <div className="h-px flex-1 bg-gray-200" />
+                </div>
+
+                <div className="space-y-6">
+                  {byYear[year].map((pub) => (
+                    <Link key={pub.id} href={`/publications/${pub.slug}`}>
+                      <Card hoverable>
+                        <CardContent>
+                          <h3 className="text-xl font-semibold mb-3 hover:underline">
+                            {pub.title}
+                          </h3>
+                          
+                          <div className="text-sm text-gray-600 mb-2">
+                            {pub.authors.join(', ')}
+                          </div>
+                          
+                          {pub.venue && (
+                            <div className="text-sm text-gray-500 italic mb-4">
+                              {pub.venue}
+                            </div>
+                          )}
+
+                          {pub.abstract && (
+                            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                              {pub.abstract}
+                            </p>
+                          )}
+
+                          <div className="flex flex-wrap gap-4 text-sm">
+                            {pub.pdfUrl && (
+                              <span className="font-medium hover:underline">
+                                PDF →
+                              </span>
+                            )}
+                            {pub.doi && (
+                              <span className="font-medium hover:underline">
+                                DOI →
+                              </span>
+                            )}
+                            {pub.arxivId && (
+                              <span className="font-medium hover:underline">
+                                arXiv →
+                              </span>
+                            )}
+                          </div>
+
+                          {pub.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+                              {pub.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        </nav>
-      </header>
-
-      <main className="container mx-auto px-4 py-16 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8">Publications</h1>
-
-        {years.map((year) => (
-          <div key={year} className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-700">{year}</h2>
-            <div className="space-y-8">
-              {byYear[year].map((pub: typeof publications[number]) => (
-                <article key={pub.id} className="border-l-4 border-blue-500 pl-6">
-                  <Link
-                    href={`/publications/${pub.slug}`}
-                    className="text-xl font-semibold hover:text-blue-600"
-                  >
-                    {pub.title}
-                  </Link>
-                  <div className="text-gray-600 mt-2">
-                    {pub.authors.join(', ')}
-                  </div>
-                  {pub.venue && (
-                    <div className="text-gray-500 italic mt-1">{pub.venue}</div>
-                  )}
-                  <div className="flex gap-4 mt-3">
-                    {pub.pdfUrl && (
-                      <a
-                        href={pub.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        PDF
-                      </a>
-                    )}
-                    {pub.doi && (
-                      <a
-                        href={`https://doi.org/${pub.doi}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        DOI
-                      </a>
-                    )}
-                    {pub.arxivId && (
-                      <a
-                        href={`https://arxiv.org/abs/${pub.arxivId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        arXiv
-                      </a>
-                    )}
-                  </div>
-                  {pub.tags.length > 0 && (
-                    <div className="flex gap-2 mt-3">
-                      {pub.tags.map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {publications.length === 0 && (
-          <div className="text-center py-16 text-gray-500">
-            No publications yet. Check back soon!
+        ) : (
+          <div className="text-center py-32">
+            <p className="text-gray-500 text-lg">No publications yet.</p>
           </div>
         )}
-      </main>
-    </div>
+      </section>
+    </main>
   )
 }

@@ -14,9 +14,12 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         get(name: string) {
-          return request.cookies.get(name)?.value
+          const cookie = request.cookies.get(name)?.value
+          console.log(`📝 Getting cookie ${name}:`, cookie ? 'exists' : 'missing')
+          return cookie
         },
         set(name: string, value: string, options: CookieOptions) {
+          console.log(`📝 Setting cookie ${name}`)
           request.cookies.set({
             name,
             value,
@@ -34,6 +37,7 @@ export async function middleware(request: NextRequest) {
           })
         },
         remove(name: string, options: CookieOptions) {
+          console.log(`📝 Removing cookie ${name}`)
           request.cookies.set({
             name,
             value: '',
@@ -54,14 +58,34 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired
+  // Refresh session if expired - this also ensures cookies are set
+  await supabase.auth.getUser()
   const { data: { session } } = await supabase.auth.getSession()
 
-  // Protect /admin routes
+  console.log('🔒 Middleware check:', {
+    path: request.nextUrl.pathname,
+    hasSession: !!session,
+    userId: session?.user?.id
+  })
+
+  // Protect /admin routes (except login and signup pages)
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
-      // Redirect to login page (you'll need to create this)
-      return NextResponse.redirect(new URL('/login', request.url))
+    const isAuthPage = 
+      request.nextUrl.pathname === '/admin/login' ||
+      request.nextUrl.pathname === '/admin/signup'
+
+    if (!session && !isAuthPage) {
+      // Redirect unauthenticated users to login
+      console.log('❌ No session, redirecting to login')
+      const redirectUrl = new URL('/admin/login', request.url)
+      redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    if (session && isAuthPage) {
+      // Redirect authenticated users away from auth pages
+      console.log('✅ Has session, redirecting to admin dashboard')
+      return NextResponse.redirect(new URL('/admin', request.url))
     }
   }
 
