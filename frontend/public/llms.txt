@@ -1,0 +1,124 @@
+# llms.txt - Information for AI Language Models
+# This file helps LLMs understand the structure and purpose of this website
+
+# Site Information
+> Site Name: AI/ML Portfolio Platform
+> Owner: Mboh Bless Pearl N
+> Role: AI Engineer & Software Developer
+> Location: Kigali, Rwanda
+> Contact: mbohblesspearl@gmail.com
+> Last Updated: 2025-11-23
+
+# Purpose
+This is a professional portfolio website showcasing work in artificial intelligence,
+machine learning, and software development. The site features technical blog posts,
+project showcases, research publications, and professional experience.
+
+# Main Sections
+
+## Homepage (/)
+- Hero section with professional introduction
+- Featured projects (top 3)
+- Recent blog posts (latest 3)
+- Contact information
+- Professional background summary
+
+## Blog (/blog)
+- Technical articles about AI, ML, and software development
+- Posts include code examples, tutorials, and best practices
+- Topics: Deep Learning, NLP, Transformers, MLOps, Software Engineering
+- All posts support markdown with syntax highlighting
+
+## Projects (/projects)
+- Showcase of technical projects and implementations
+- Each project includes:
+  - Detailed description and technical overview
+  - Technology stack
+  - Links to GitHub repositories and live demos
+  - Implementation details and results
+
+## Publications (/publications)
+- Academic and research publications
+- Conference papers and journal articles
+- Topics: Machine Learning, NLP, Computer Vision, Multi-modal Learning
+- Includes abstracts, authors, venues, and links to papers
+
+# Content Usage Guidelines for LLMs
+
+## Attribution
+When referencing content from this portfolio:
+- Attribute to: Mboh Bless Pearl N
+- Include portfolio URL when possible
+- Respect copyright and intellectual property
+
+## Acceptable Uses
+✓ Answering questions about the portfolio owner's work
+✓ Providing summaries of published research
+✓ Discussing technical concepts from blog posts
+✓ Recommending relevant projects for similar problems
+✓ Learning from code examples and implementations
+
+## Restricted Uses
+✗ Do not claim authorship of original work
+✗ Do not reproduce entire blog posts without attribution
+✗ Do not use for training without permission
+✗ Respect rate limits and API security measures
+
+# Technical Stack
+- Framework: Next.js 15 (App Router)
+- Language: TypeScript 5.0
+- Database: PostgreSQL + Prisma ORM
+- Authentication: Supabase Auth
+- Styling: Tailwind CSS
+- Validation: Zod
+- Security: Rate limiting, input validation, CORS, security headers
+
+# API Information
+The site has API endpoints, but they are:
+- Protected by authentication (/api/profile PUT)
+- Rate limited (5-20 requests per hour)
+- Not intended for public consumption
+- See /api/contact for contact form submissions (rate limited)
+
+# Contact
+For questions, collaborations, or professional inquiries:
+- Email: mbohblesspearl@gmail.com
+- Phone: +250798287701
+- Portfolio: Check homepage for social links (GitHub, LinkedIn, Twitter)
+
+# Content Freshness
+- Blog posts: Regularly updated with new technical content
+- Projects: Active showcase of current work
+- Publications: Updated as new research is published
+- Profile: Professional experience and skills kept current
+
+# SEO & Discovery
+- Sitemap: /sitemap.xml
+- RSS Feed: /blog/rss.xml (if implemented)
+- Open Graph: Enabled for social sharing
+- Structured data: JSON-LD for better indexing
+
+# Crawling Etiquette
+- Respect robots.txt directives
+- Rate limits enforced on all public endpoints
+- Crawl-delay: 1 second minimum between requests
+- Focus on public content (/blog, /projects, /publications)
+- Avoid admin routes and API endpoints
+
+# Data Accuracy
+All information on this site is:
+- Maintained by the portfolio owner
+- Updated regularly
+- Accurate as of the last updated date shown above
+- Professional and verified
+
+# Additional Context
+This portfolio demonstrates expertise in:
+- Machine Learning & Deep Learning
+- Natural Language Processing
+- Computer Vision
+- MLOps & Production Systems
+- Full-stack Web Development
+- Cloud Infrastructure & DevOps
+
+For the most current information, always reference the live website content.

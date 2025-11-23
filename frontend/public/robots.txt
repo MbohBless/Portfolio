@@ -1,0 +1,89 @@
+# robots.txt for AI/ML Portfolio Platform
+# This file controls which pages search engines and web crawlers can access
+
+# Allow all crawlers by default
+User-agent: *
+
+# Allow public pages
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /projects
+Allow: /projects/*
+Allow: /publications
+
+# Block admin dashboard and authentication pages
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /auth/*
+
+# Block API endpoints (not meant for crawling)
+Disallow: /api/*
+
+# Block internal Next.js files
+Disallow: /_next/*
+Disallow: /static/*
+
+# Sitemap location
+# The sitemap is automatically generated at /sitemap.xml
+# Update NEXT_PUBLIC_SITE_URL in your .env to set the correct domain
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Crawl delay (be polite to the server)
+Crawl-delay: 1
+
+# Specific rules for common AI/LLM crawlers
+User-agent: GPTBot
+Allow: /
+Allow: /blog/*
+Allow: /projects/*
+Allow: /publications
+Disallow: /admin/*
+Disallow: /api/*
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /blog/*
+Allow: /projects/*
+Allow: /publications
+Disallow: /admin/*
+Disallow: /api/*
+
+User-agent: CCBot
+Allow: /
+Allow: /blog/*
+Allow: /projects/*
+Allow: /publications
+Disallow: /admin/*
+Disallow: /api/*
+
+User-agent: anthropic-ai
+Allow: /
+Allow: /blog/*
+Allow: /projects/*
+Allow: /publications
+Disallow: /admin/*
+Disallow: /api/*
+
+User-agent: Claude-Web
+Allow: /
+Allow: /blog/*
+Allow: /projects/*
+Allow: /publications
+Disallow: /admin/*
+Disallow: /api/*
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /blog/*
+Allow: /projects/*
+Allow: /publications
+Disallow: /admin/*
+Disallow: /api/*
+
+# Block aggressive scrapers
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
