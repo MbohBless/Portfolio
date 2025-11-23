@@ -1,121 +1,177 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ZodError } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth-server'
+import { profileSchema, sanitizeProfileUrls } from '@/lib/validations'
+import { applyRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import {
+  errorResponse,
+  handleValidationError,
+  successResponse,
+  addSecurityHeaders,
+  handleOptions,
+  sanitizeErrorMessage,
+  safeJsonParse,
+} from '@/lib/api-utils'
 
-// GET - Fetch profile data
-export async function GET() {
+/**
+ * Handle CORS preflight requests
+ */
+export async function OPTIONS(req: NextRequest) {
+  return handleOptions(req.headers.get('origin'))
+}
+
+/**
+ * GET - Fetch profile data (public endpoint)
+ */
+export async function GET(req: NextRequest) {
+  const origin = req.headers.get('origin')
+
   try {
     // Get the first (and only) profile record
     const profile = await prisma.profile.findFirst()
-    
+
     if (!profile) {
       // Return default profile if none exists
-      return NextResponse.json({
-        name: 'Mbou Bless Pearl N',
+      const defaultProfile = {
+        name: 'Mboh Bless Pearl N',
         title: 'AI Engineer & Software Developer',
         bio: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
-        email: 'contact@example.com',
-        phone: '',
-        location: '',
+        email: 'mbohblesspearl@gmail.com',
+        phone: '+250798287701',
+        location: 'Kigali, RWA',
         profileImageUrl: '/images/profile.png',
         resumeUrl: '',
         heroTitle: 'AI Engineer & Software Developer',
-        heroSubtitle: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
+        heroSubtitle:
+          'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
         availableForWork: true,
         githubUrl: '',
         linkedinUrl: '',
         twitterUrl: '',
         websiteUrl: '',
-      })
+      }
+      const response = successResponse(defaultProfile)
+      return addSecurityHeaders(response, origin)
     }
-    
-    return NextResponse.json(profile)
+
+    const response = successResponse(profile)
+    return addSecurityHeaders(response, origin)
   } catch (error) {
     console.error('Error fetching profile:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch profile' },
-      { status: 500 }
+    return addSecurityHeaders(
+      errorResponse(sanitizeErrorMessage(error), 500),
+      origin
     )
   }
 }
 
-// PUT - Update profile data
-export async function PUT(request: NextRequest) {
+/**
+ * PUT - Update profile data (protected endpoint)
+ * Requires authentication and includes rate limiting
+ */
+export async function PUT(req: NextRequest) {
+  const origin = req.headers.get('origin')
+
   try {
     // Check authentication
     const user = await getUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return addSecurityHeaders(errorResponse('Unauthorized', 401), origin)
     }
 
-    const data = await request.json()
-    
-    // Validate required fields
-    if (!data.name || !data.title || !data.email || !data.heroTitle || !data.heroSubtitle) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    // Apply rate limiting (20 updates per hour)
+    const rateLimit = applyRateLimit(req, RATE_LIMITS.profile)
+    if (!rateLimit.allowed) {
+      const response = errorResponse(rateLimit.message || 'Rate limit exceeded', 429)
+      Object.entries(rateLimit.headers).forEach(([key, value]) => {
+        response.headers.set(key, value)
+      })
+      return addSecurityHeaders(response, origin)
     }
+
+    // Safely parse JSON body
+    const parseResult = await safeJsonParse(req)
+    if (!parseResult.success) {
+      return addSecurityHeaders(errorResponse(parseResult.error, 400), origin)
+    }
+
+    // Validate input with Zod schema
+    const validatedData = profileSchema.parse(parseResult.data)
+
+    // Sanitize URLs to prevent XSS and malicious redirects
+    const sanitizedData = sanitizeProfileUrls(validatedData)
 
     // Check if profile exists
     const existingProfile = await prisma.profile.findFirst()
-    
+
     let profile
     if (existingProfile) {
       // Update existing profile
       profile = await prisma.profile.update({
         where: { id: existingProfile.id },
         data: {
-          name: data.name,
-          title: data.title,
-          bio: data.bio || null,
-          email: data.email,
-          phone: data.phone || null,
-          location: data.location || null,
-          profileImageUrl: data.profileImageUrl || '/images/profile.png',
-          resumeUrl: data.resumeUrl || null,
-          heroTitle: data.heroTitle,
-          heroSubtitle: data.heroSubtitle,
-          availableForWork: data.availableForWork ?? true,
-          githubUrl: data.githubUrl || null,
-          linkedinUrl: data.linkedinUrl || null,
-          twitterUrl: data.twitterUrl || null,
-          websiteUrl: data.websiteUrl || null,
+          name: sanitizedData.name,
+          title: sanitizedData.title,
+          bio: sanitizedData.bio || null,
+          email: sanitizedData.email,
+          phone: sanitizedData.phone || null,
+          location: sanitizedData.location || null,
+          profileImageUrl: sanitizedData.profileImageUrl || '/images/profile.png',
+          resumeUrl: sanitizedData.resumeUrl || null,
+          heroTitle: sanitizedData.heroTitle,
+          heroSubtitle: sanitizedData.heroSubtitle,
+          availableForWork: sanitizedData.availableForWork ?? true,
+          githubUrl: sanitizedData.githubUrl || null,
+          linkedinUrl: sanitizedData.linkedinUrl || null,
+          twitterUrl: sanitizedData.twitterUrl || null,
+          websiteUrl: sanitizedData.websiteUrl || null,
         },
       })
     } else {
       // Create new profile
       profile = await prisma.profile.create({
         data: {
-          name: data.name,
-          title: data.title,
-          bio: data.bio || null,
-          email: data.email,
-          phone: data.phone || null,
-          location: data.location || null,
-          profileImageUrl: data.profileImageUrl || '/images/profile.png',
-          resumeUrl: data.resumeUrl || null,
-          heroTitle: data.heroTitle,
-          heroSubtitle: data.heroSubtitle,
-          availableForWork: data.availableForWork ?? true,
-          githubUrl: data.githubUrl || null,
-          linkedinUrl: data.linkedinUrl || null,
-          twitterUrl: data.twitterUrl || null,
-          websiteUrl: data.websiteUrl || null,
+          name: sanitizedData.name,
+          title: sanitizedData.title,
+          bio: sanitizedData.bio || null,
+          email: sanitizedData.email,
+          phone: sanitizedData.phone || null,
+          location: sanitizedData.location || null,
+          profileImageUrl: sanitizedData.profileImageUrl || '/images/profile.png',
+          resumeUrl: sanitizedData.resumeUrl || null,
+          heroTitle: sanitizedData.heroTitle,
+          heroSubtitle: sanitizedData.heroSubtitle,
+          availableForWork: sanitizedData.availableForWork ?? true,
+          githubUrl: sanitizedData.githubUrl || null,
+          linkedinUrl: sanitizedData.linkedinUrl || null,
+          twitterUrl: sanitizedData.twitterUrl || null,
+          websiteUrl: sanitizedData.websiteUrl || null,
         },
       })
     }
 
-    return NextResponse.json(profile)
+    console.log('✅ Profile updated successfully:', profile.id)
+
+    // Return success response with rate limit headers
+    const response = successResponse(profile, 'Profile updated successfully')
+    Object.entries(rateLimit.headers).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return addSecurityHeaders(response, origin)
   } catch (error) {
     console.error('Error updating profile:', error)
-    return NextResponse.json(
-      { error: 'Failed to update profile' },
-      { status: 500 }
+
+    // Handle Zod validation errors
+    if (error instanceof ZodError) {
+      return addSecurityHeaders(handleValidationError(error), origin)
+    }
+
+    // Generic error response
+    return addSecurityHeaders(
+      errorResponse(sanitizeErrorMessage(error), 500),
+      origin
     )
   }
 }

@@ -8,15 +8,14 @@ import { Input } from '@/components/Input'
 export default function ProfilePage() {
   const [profileData, setProfileData] = useState({
     // Personal Info
-    name: 'Mbou Bless Pearl N',
+    name: 'Mboh Bless Pearl N',
     title: 'AI Engineer & Software Developer',
     bio: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
-    email: 'contact@example.com',
-    phone: '',
-    location: '',
+    email: 'mbohblesspearl@gmail.com',
+    phone: '+250798287701',
+    location: 'Kigali, RWA',
     resumeUrl: '',
 
-    // Social Links
     githubUrl: '',
     linkedinUrl: '',
     twitterUrl: '',
@@ -285,7 +284,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Save Button */}
         <div className="flex gap-4">
           <Button
             variant="primary"

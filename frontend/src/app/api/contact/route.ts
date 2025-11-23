@@ -1,18 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { ZodError } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { contactSchema } from '@/lib/validations'
+import { applyRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import {
+  errorResponse,
+  handleValidationError,
+  successResponse,
+  addSecurityHeaders,
+  handleOptions,
+  sanitizeErrorMessage,
+  safeJsonParse,
+} from '@/lib/api-utils'
 
-async function sendDiscordNotification(name: string, email: string, message: string, contactId: string) {
+async function sendDiscordNotification(
+  name: string,
+  email: string,
+  message: string,
+  contactId: string
+) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL
 
   if (!webhookUrl) {
-    console.warn('⚠️ Discord webhook URL not configured')
+    console.warn('Discord webhook URL not configured')
     return
   }
 
   try {
     const embed = {
       title: 'New Contact Form Submission',
-      color: 0x5865F2, // Discord blurple color
+      color: 0x5865f2, // Discord blurple color
       fields: [
         {
           name: 'Name',
@@ -52,43 +69,88 @@ async function sendDiscordNotification(name: string, email: string, message: str
         embeds: [embed],
       }),
     })
-
   } catch (error) {
     console.error('Failed to send Discord notification:', error)
   }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const { name, email, message } = await req.json()
+/**
+ * Handle CORS preflight requests
+ */
+export async function OPTIONS(req: NextRequest) {
+  return handleOptions(req.headers.get('origin'))
+}
 
-    // Validate input
-    if (!name || !email || !message) {
-      return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
+/**
+ * Handle contact form submissions
+ * Protected by rate limiting and input validation
+ */
+export async function POST(req: NextRequest) {
+  const origin = req.headers.get('origin')
+
+  try {
+    // Apply rate limiting (5 submissions per hour per IP)
+    const rateLimit = applyRateLimit(req, RATE_LIMITS.contact)
+    if (!rateLimit.allowed) {
+      const response = errorResponse(rateLimit.message || 'Rate limit exceeded', 429)
+      Object.entries(rateLimit.headers).forEach(([key, value]) => {
+        response.headers.set(key, value)
+      })
+      return addSecurityHeaders(response, origin)
     }
+
+    // Safely parse JSON body
+    const parseResult = await safeJsonParse(req)
+    if (!parseResult.success) {
+      return addSecurityHeaders(errorResponse(parseResult.error, 400), origin)
+    }
+
+    // Validate input with Zod schema
+    const validatedData = contactSchema.parse(parseResult.data)
 
     // Save to database
     const contact = await prisma.contact.create({
       data: {
-        name,
-        email,
-        message,
+        name: validatedData.name,
+        email: validatedData.email,
+        message: validatedData.message,
         read: false,
       },
     })
 
-    console.log('Contact Form Submission saved:', contact.id)
+    console.log('✅ Contact form submission saved:', contact.id)
 
-    sendDiscordNotification(name, email, message, contact.id).catch((err) =>
-      console.error('Discord notification error:', err)
+    // Send Discord notification asynchronously
+    sendDiscordNotification(
+      validatedData.name,
+      validatedData.email,
+      validatedData.message,
+      contact.id
+    ).catch((err) => console.error('Discord notification error:', err))
+
+    // Return success response with rate limit headers
+    const response = successResponse(
+      undefined,
+      "Message received! We'll get back to you soon.",
+      201
     )
-
-    return NextResponse.json({
-      success: true,
-      message: 'Message received! We\'ll get back to you soon.',
+    Object.entries(rateLimit.headers).forEach(([key, value]) => {
+      response.headers.set(key, value)
     })
+
+    return addSecurityHeaders(response, origin)
   } catch (error) {
     console.error('Contact form error:', error)
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 })
+
+    // Handle Zod validation errors
+    if (error instanceof ZodError) {
+      return addSecurityHeaders(handleValidationError(error), origin)
+    }
+
+    // Generic error response
+    return addSecurityHeaders(
+      errorResponse(sanitizeErrorMessage(error), 500),
+      origin
+    )
   }
 }

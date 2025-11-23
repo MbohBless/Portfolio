@@ -37,10 +37,10 @@ INSERT INTO profile (
     available_for_work,
     profile_image_url
 ) VALUES (
-    'Mbou Bless Pearl N',
+    'Mboh Bless Pearl N',
     'AI Engineer & Software Developer',
     'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
-    'contact@example.com',
+    'mbohblesspearl@gmail.com',
     'AI Engineer & Software Developer',
     'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
     true,

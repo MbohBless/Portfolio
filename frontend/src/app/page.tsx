@@ -60,15 +60,15 @@ export default async function Home() {
 
   // Default profile values if none exists
   const defaultProfile = {
-    name: 'Mbou Bless Pearl N',
+    name: 'Mboh Bless Pearl N',
     title: 'AI Engineer & Software Developer',
     bio: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
     heroTitle: 'AI Engineer & Software Developer',
     heroSubtitle: 'Building intelligent systems and scalable software solutions.',
     availableForWork: true,
-    email: 'contact@example.com',
-    phone: null,
-    location: null,
+    email: 'mbohblesspearl@gmail.com',
+    phone: '+250798287701',
+    location: 'Kigali, RWA',
     profileImageUrl: null,
     resumeUrl: null,
     githubUrl: 'https://github.com',
@@ -166,7 +166,7 @@ export default async function Home() {
                     Twitter
                   </a>
                 )}
-                {profileData.websiteUrl && (
+                {/* {profileData.websiteUrl && (
                   <a
                     href={profileData.websiteUrl}
                     target="_blank"
@@ -175,7 +175,7 @@ export default async function Home() {
                   >
                     Website
                   </a>
-                )}
+                )} */}
               </div>
 
               <div className="flex flex-wrap gap-4 pt-2">
@@ -197,7 +197,7 @@ export default async function Home() {
                     download
                   >
                     <Button size="lg" variant="ghost">
-                      📄 Download Resume
+                       Download Resume
                     </Button>
                   </a>
                 )}

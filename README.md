@@ -12,11 +12,12 @@ A modern, production-ready personal portfolio system built for AI engineers, res
 - **Dynamic Content Management** - Projects, blog posts, publications, work experience, education, and skills
 - **Markdown Support** - Write blog posts and project descriptions in markdown with syntax highlighting
 - **Admin Dashboard** - Secure admin panel with authentication and content management
+- **Production-Grade Security** - Rate limiting, input validation, CORS, security headers, and XSS protection
 - **Theme System** - Light, dark, and system theme modes with smooth transitions
 - **Discord Notifications** - Real-time contact form notifications via Discord webhooks
 - **Background Animations** - Page-specific canvas animations (network graphs, matrix effects, code rain)
 - **Responsive Design** - Mobile-first design with Tailwind CSS
-- **SEO Optimized** - Meta tags, Open Graph, and semantic HTML
+- **SEO Optimized** - Dynamic sitemap, robots.txt, llms.txt, meta tags, Open Graph, and semantic HTML
 - **Type-Safe** - Full TypeScript coverage with Prisma-generated types
 - **Zero-Cost Hosting** - Deploy for free on Vercel
 
@@ -32,6 +33,113 @@ A modern, production-ready personal portfolio system built for AI engineers, res
 | **Auth** | Supabase Auth |
 | **Storage** | Supabase Storage |
 | **Deployment** | Vercel |
+| **Validation** | Zod |
+
+## Security & API Protection
+
+This portfolio includes production-grade security measures to protect against common web vulnerabilities:
+
+### Built-in Security Features
+
+- **Rate Limiting**
+  - Contact form: 5 submissions per hour per IP
+  - Profile updates: 20 updates per hour
+  - Automatic IP detection (supports Cloudflare, reverse proxies)
+  - Standard headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+
+- **Input Validation (Zod)**
+  - Type-safe validation for all API endpoints
+  - Contact form: Name (2-100 chars), valid email, message (10-5000 chars)
+  - Profile data: Email format, URL validation, field length limits
+  - Detailed validation error messages
+
+- **URL Sanitization**
+  - Prevents XSS attacks via malicious URLs
+  - Only allows `http://` and `https://` protocols
+  - Validates all social links and external URLs
+
+- **Security Headers**
+  - `X-Content-Type-Options: nosniff` - Prevents MIME sniffing
+  - `X-Frame-Options: DENY` - Prevents clickjacking
+  - `X-XSS-Protection: 1; mode=block` - XSS protection
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy` - Restricts browser features
+
+- **CORS Configuration**
+  - Configurable allowed origins
+  - Preflight request handling (OPTIONS)
+  - Proper credential handling
+
+- **Authentication & Authorization**
+  - Supabase JWT tokens
+  - Protected admin routes via middleware
+  - Session management
+  - Single admin account enforcement
+
+- **Error Handling**
+  - Sanitized error messages in production
+  - Detailed errors in development
+  - Prevents information leakage
+  - Standardized error format with timestamps
+
+### Protected Endpoints
+
+#### `/api/contact` (Public)
+- Rate limiting: 5 submissions/hour per IP
+- Validates name, email, message
+- Discord webhook integration
+- Returns: 201 Created or 429 Too Many Requests
+
+#### `/api/profile` (GET: Public, PUT: Protected)
+- GET: Returns profile data
+- PUT: Requires authentication
+- Rate limiting: 20 updates/hour
+- Validates all profile fields
+- URL sanitization for links
+
+### What This Protects Against
+
+✅ **SQL Injection** - Prisma ORM with parameterized queries
+✅ **XSS Attacks** - URL sanitization + security headers
+✅ **CSRF** - CORS configuration + SameSite cookies
+✅ **DoS/Spam** - Rate limiting on all endpoints
+✅ **Injection Attacks** - Zod validation with strict schemas
+✅ **Malicious URLs** - Protocol validation (http/https only)
+✅ **Information Leakage** - Error sanitization in production
+✅ **Invalid Data** - Type-safe validation with detailed errors
+
+### Security Files
+
+- `src/lib/validations.ts` - Zod schemas for input validation
+- `src/lib/rate-limit.ts` - In-memory rate limiter
+- `src/lib/api-utils.ts` - Security headers, CORS, error handling
+- `src/proxy.ts` - Authentication middleware
+
+### Rate Limit Response Example
+
+```json
+HTTP 429 Too Many Requests
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 2025-11-23T13:00:00.000Z
+Retry-After: 3600
+
+{
+  "error": "Rate limit exceeded. Please try again in 60 minutes.",
+  "timestamp": "2025-11-23T12:00:00.000Z"
+}
+```
+
+### Validation Error Example
+
+```json
+HTTP 400 Bad Request
+
+{
+  "error": "email: Invalid email address",
+  "timestamp": "2025-11-23T12:00:00.000Z"
+}
+```
 
 ## Quick Start
 
@@ -141,7 +249,10 @@ frontend/
 │   │   └── ...
 │   ├── lib/                   # Utilities
 │   │   ├── prisma.ts          # Prisma client
-│   │   └── auth-client.ts     # Auth helpers
+│   │   ├── auth-client.ts     # Auth helpers
+│   │   ├── validations.ts     # Zod validation schemas
+│   │   ├── rate-limit.ts      # Rate limiting middleware
+│   │   └── api-utils.ts       # Security & API utilities
 │   └── proxy.ts               # Auth middleware
 ├── prisma/
 │   └── schema.prisma          # Database schema
@@ -276,6 +387,66 @@ Modify `tailwind.config.ts` to change:
 3. **Create public view**: Add page in `src/app/`
 4. **Add server actions**: Create mutations in `src/app/actions/`
 
+### SEO Configuration
+
+The portfolio includes comprehensive SEO features out of the box:
+
+#### Dynamic Sitemap (`/sitemap.xml`)
+
+Automatically generated sitemap that includes:
+- All published blog posts
+- All published projects
+- Main section pages (blog, projects, publications)
+- Proper priority and change frequency settings
+- Last modified dates for each page
+
+The sitemap is generated from `src/app/sitemap.ts` and automatically updates when you publish new content.
+
+#### Robots.txt (`/robots.txt`)
+
+Controls search engine and AI crawler access:
+- **Allows**: Public pages (blog, projects, publications)
+- **Blocks**: Admin dashboard, API endpoints, auth routes
+- **Supports**: Google, Bing, ChatGPT, Claude, Perplexity, etc.
+- **Features**: Crawl delays to protect server resources
+
+Located at: `public/robots.txt`
+
+#### LLMs.txt (`/llms.txt`)
+
+Helps AI systems understand your portfolio:
+- Your professional information and expertise
+- Site structure and content descriptions
+- Usage guidelines for AI training
+- Attribution requirements
+- Technical stack information
+
+Located at: `public/llms.txt`
+
+**Important**: Update both files with your actual domain and information:
+1. Edit `public/robots.txt` - Replace `yourdomain.com` with your actual domain
+2. Edit `public/llms.txt` - Update personal information and URLs
+3. Set `NEXT_PUBLIC_SITE_URL` in `.env` for the sitemap
+
+#### SEO Best Practices
+
+- **Meta Tags**: Each page has proper title, description, and Open Graph tags
+- **Semantic HTML**: Proper heading hierarchy and ARIA labels
+- **Image Optimization**: Next.js Image component with lazy loading
+- **Performance**: Server-side rendering, static generation where possible
+- **Mobile-First**: Responsive design for better mobile rankings
+- **Structured Data**: Consider adding JSON-LD for rich snippets
+
+#### Verify SEO Setup
+
+After deployment:
+1. Check sitemap: `https://yourdomain.com/sitemap.xml`
+2. Check robots.txt: `https://yourdomain.com/robots.txt`
+3. Check llms.txt: `https://yourdomain.com/llms.txt`
+4. Submit sitemap to Google Search Console
+5. Verify with Bing Webmaster Tools
+6. Test with: [Google Rich Results Test](https://search.google.com/test/rich-results)
+
 ## Deployment
 
 ### Vercel (Recommended)
@@ -400,11 +571,18 @@ export default async function ProjectsPage() {
 
 ### Security
 
+See the [Security & API Protection](#security--api-protection) section above for comprehensive security documentation.
+
+Key security practices:
+- Rate limiting on all public endpoints (prevents DoS/spam)
+- Input validation with Zod schemas
+- URL sanitization (prevents XSS)
+- Security headers on all responses
 - Single admin account enforcement
 - Environment variables never committed
 - Service role key kept server-side only
-- CORS headers on API routes
 - Authentication on all admin routes
+- Error sanitization in production
 
 ### Backup
 

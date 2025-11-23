@@ -88,12 +88,12 @@ export default async function AdminDashboard() {
           </Link>
         </div>
 
-        {/* Note about auth */}
+        {/* yupeee solved 🙈 */}
         {/* <div className="mt-12">
           <Card className="bg-green-50 border-green-200">
             <CardContent>
               <div className="flex gap-3">
-                <div className="text-2xl">✅</div>
+                <div className="text-2xl"></div>
                 <div>
                   <h3 className="font-semibold mb-1">Authentication Enabled</h3>
                   <p className="text-sm text-gray-700 mb-2">

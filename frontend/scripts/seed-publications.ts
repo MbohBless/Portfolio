@@ -9,7 +9,7 @@ async function main() {
     {
       title: 'Efficient Transformer Architectures for Natural Language Understanding',
       slug: 'efficient-transformers-nlu',
-      authors: ['Mbou Bless Pearl N', 'Jane Smith', 'John Doe'],
+      authors: ['Mboh Bless Pearl N', 'Jane Smith', 'John Doe'],
       year: 2024,
       venue: 'Neural Information Processing Systems (NeurIPS)',
       doi: '10.48550/arXiv.2024.12345',
@@ -23,7 +23,7 @@ async function main() {
     {
       title: 'Multi-Modal Learning for Visual Question Answering',
       slug: 'multimodal-vqa',
-      authors: ['Mbou Bless Pearl N', 'Alice Johnson'],
+      authors: ['Mboh Bless Pearl N', 'Alice Johnson'],
       year: 2023,
       venue: 'International Conference on Machine Learning (ICML)',
       doi: '10.48550/arXiv.2023.67890',
@@ -37,7 +37,7 @@ async function main() {
     {
       title: 'Reinforcement Learning for Autonomous Navigation in Complex Environments',
       slug: 'rl-autonomous-navigation',
-      authors: ['Mbou Bless Pearl N', 'Robert Chen', 'Sarah Williams'],
+      authors: ['Mboh Bless Pearl N', 'Robert Chen', 'Sarah Williams'],
       year: 2023,
       venue: 'Conference on Robot Learning (CoRL)',
       doi: '10.48550/arXiv.2023.11111',
@@ -51,7 +51,7 @@ async function main() {
     {
       title: 'Few-Shot Learning with Meta-Learning and Data Augmentation',
       slug: 'few-shot-meta-learning',
-      authors: ['Mbou Bless Pearl N', 'Emily Davis'],
+      authors: ['Mboh Bless Pearl N', 'Emily Davis'],
       year: 2022,
       venue: 'IEEE Conference on Computer Vision and Pattern Recognition (CVPR)',
       doi: '10.48550/arXiv.2022.22222',
@@ -68,7 +68,6 @@ async function main() {
     await prisma.publication.create({
       data: pub,
     })
-    // console.log(`✅ Created publication: ${pub.title} (${pub.year})`)
   }
 
   console.log('✨ Seeding completed!')

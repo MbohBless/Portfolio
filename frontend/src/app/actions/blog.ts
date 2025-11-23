@@ -27,7 +27,6 @@ export async function createBlogPost(data: unknown) {
   try {
     const validated = BlogPostSchema.parse(data)
 
-    // Calculate reading time from content if provided
     const readingTime = validated.content
       ? calculateReadingTime(validated.content)
       : validated.readingTime

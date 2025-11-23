@@ -84,10 +84,9 @@ async function main() {
     await prisma.blogPost.create({
       data: post,
     })
-    // console.log(`✅ Created blog post: ${post.title}`)
+   
   }
 
-  // console.log('✨ Seeding completed!')
 }
 
 main()

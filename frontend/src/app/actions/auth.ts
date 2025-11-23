@@ -2,18 +2,11 @@
 
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-
-/**
- * Check if any users exist in Supabase auth
- * Used to disable signup when an admin account already exists
- */
 export async function checkUsersExist(): Promise<boolean> {
   try {
-    // Use service role key to access admin functions
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!serviceRoleKey) {
-      console.warn('⚠️ SUPABASE_SERVICE_ROLE_KEY not configured, allowing signup')
       return false
     }
 
@@ -31,15 +24,15 @@ export async function checkUsersExist(): Promise<boolean> {
       }
     )
 
-    // Check if there are any users in Supabase auth
+   
     const { data: { users }, error } = await supabase.auth.admin.listUsers({
       page: 1,
-      perPage: 1, // Only need to know if at least one exists
+      perPage: 1, 
     })
 
     if (error) {
       console.error('Error checking users:', error)
-      // If we can't check, allow signup to not lock out the initial setup
+   
       return false
     }
 
@@ -48,7 +41,6 @@ export async function checkUsersExist(): Promise<boolean> {
     return hasUsers
   } catch (error) {
     console.error('Error checking users:', error)
-    // If there's an error checking, allow signup to not lock out the initial setup
     return false
   }
 }
