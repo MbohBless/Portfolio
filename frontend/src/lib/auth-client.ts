@@ -40,11 +40,11 @@ export function useAuth() {
       }
 
       if (!data.session) {
-        console.error('❌ No session created')
+        console.error('No session created')
         throw new Error('Login failed: No session created. Please try again.')
       }
 
-      console.log('✅ Login successful, redirecting...')
+      // console.log('✅ Login successful, redirecting...')
       // Successful login - use router.push with a longer delay for cookies to propagate
       await new Promise(resolve => setTimeout(resolve, 500))
       router.push('/admin')

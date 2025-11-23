@@ -53,15 +53,38 @@ export default function SignupPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
-          <div className="bg-white border border-gray-200 p-8 text-center">
-            <div className="text-4xl mb-4">🔒</div>
-            <h2 className="text-2xl font-bold mb-4">Signup Disabled</h2>
-            <p className="text-gray-600 mb-6">
-              An admin account already exists. Only one account is allowed per portfolio.
-            </p>
+          <div className="bg-white border border-gray-200 p-8">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">🎭</div>
+              <h2 className="text-2xl font-bold mb-3">Access Politely Denied</h2>
+              <div className="w-16 h-1 bg-gray-300 mx-auto mb-4"></div>
+            </div>
+
+            <div className="space-y-3 text-sm text-gray-600 mb-6">
+              <p className="leading-relaxed">
+                We appreciate your enthusiasm, but this portfolio already has an administrator.
+              </p>
+              <p className="leading-relaxed">
+                Unless you're the owner (in which case, where <em>are</em> you going?),
+                you might be looking for the login page instead.
+              </p>
+              <div className="pt-2 pb-2 px-4 bg-gray-50 border-l-4 border-gray-300 italic">
+                <p className="text-xs text-gray-500">
+                  Fun fact: Only one admin account is permitted per portfolio.
+                  We're exclusive like that.
+                </p>
+              </div>
+            </div>
+
             <Link href="/admin/login">
-              <Button variant="primary" className="w-full">
-                Go to Login
+              <Button variant="primary" className="w-full mb-3">
+                I'm the Admin — Take Me to Login
+              </Button>
+            </Link>
+
+            <Link href="/" className="block">
+              <Button variant="ghost" className="w-full">
+                View Portfolio Instead
               </Button>
             </Link>
           </div>
@@ -72,7 +95,7 @@ export default function SignupPage() {
               href="/"
               className="text-sm text-gray-600 hover:text-black"
             >
-              ← Back to site
+              ← Return to homepage
             </Link>
           </div>
         </div>
@@ -85,7 +108,7 @@ export default function SignupPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
           <div className="bg-white border border-gray-200 p-8 text-center">
-            <div className="text-4xl mb-4">✅</div>
+            
             <h2 className="text-2xl font-bold mb-4">Check Your Email</h2>
             <p className="text-gray-600 mb-6">
               We've sent you a confirmation link. Please check your email to verify your account.

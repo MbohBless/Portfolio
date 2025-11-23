@@ -89,7 +89,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Note about auth */}
-        <div className="mt-12">
+        {/* <div className="mt-12">
           <Card className="bg-green-50 border-green-200">
             <CardContent>
               <div className="flex gap-3">
@@ -106,7 +106,7 @@ export default async function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
       </main>
   )
 }

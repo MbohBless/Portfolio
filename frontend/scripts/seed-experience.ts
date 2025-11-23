@@ -80,7 +80,7 @@ async function main() {
     await prisma.workExperience.create({
       data: exp,
     })
-    console.log(`✅ Created experience: ${exp.position} at ${exp.company}`)
+    // console.log(`✅ Created experience: ${exp.position} at ${exp.company}`)
   }
 
   console.log('✨ Seeding completed!')

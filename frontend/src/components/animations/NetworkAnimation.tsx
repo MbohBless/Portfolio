@@ -85,8 +85,8 @@ export function NetworkAnimation() {
       })
 
       // Draw connections
-      ctx.strokeStyle = `rgba(${lineColor}, 0.08)`
-      ctx.lineWidth = 1
+      ctx.strokeStyle = `rgba(${lineColor}, 1)`
+      ctx.lineWidth = 1.5
       nodes.forEach((node, i) => {
         node.connections.forEach((connIdx) => {
           const other = nodes[connIdx]
@@ -96,7 +96,7 @@ export function NetworkAnimation() {
           const opacity = Math.max(0, 1 - distance / 150)
 
           ctx.save()
-          ctx.globalAlpha = opacity * 0.1
+          ctx.globalAlpha = opacity * 0.3
           ctx.beginPath()
           ctx.moveTo(node.x, node.y)
           ctx.lineTo(other.x, other.y)
@@ -109,7 +109,7 @@ export function NetworkAnimation() {
       nodes.forEach((node) => {
         // Node circle
         ctx.save()
-        ctx.globalAlpha = 0.15
+        ctx.globalAlpha = 0.5
         ctx.fillStyle = `rgba(${nodeColor}, 1)`
         ctx.beginPath()
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2)
@@ -120,9 +120,9 @@ export function NetworkAnimation() {
         if (node.connections.length > 3) {
           const pulseRadius = node.radius + Math.sin(Date.now() * 0.003) * 2
           ctx.save()
-          ctx.globalAlpha = 0.05
+          ctx.globalAlpha = 0.3
           ctx.strokeStyle = `rgba(${pulseColor}, 1)`
-          ctx.lineWidth = 1
+          ctx.lineWidth = 2
           ctx.beginPath()
           ctx.arc(node.x, node.y, pulseRadius, 0, Math.PI * 2)
           ctx.stroke()
@@ -141,13 +141,13 @@ export function NetworkAnimation() {
           const target = nodes[targetIdx]
 
           ctx.save()
-          ctx.globalAlpha = 0.2
+          ctx.globalAlpha = 0.6
           ctx.fillStyle = `rgba(${pulseColor}, 1)`
           const t = Math.random()
           const packetX = randomNode.x + (target.x - randomNode.x) * t
           const packetY = randomNode.y + (target.y - randomNode.y) * t
           ctx.beginPath()
-          ctx.arc(packetX, packetY, 2, 0, Math.PI * 2)
+          ctx.arc(packetX, packetY, 3, 0, Math.PI * 2)
           ctx.fill()
           ctx.restore()
         }
@@ -168,7 +168,7 @@ export function NetworkAnimation() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 -z-[5] pointer-events-none"
-      style={{ opacity: 0.7 }}
+      style={{ opacity: 1 }}
     />
   )
 }

@@ -12,7 +12,6 @@ export function MatrixAnimation() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Set canvas size
     const resizeCanvas = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
@@ -54,23 +53,23 @@ export function MatrixAnimation() {
       matrices.forEach((matrix) => {
         // Update opacity with sine wave
         matrix.phase += matrix.speed * 0.02
-        matrix.opacity = 0.05 + Math.sin(matrix.phase) * 0.05
+        matrix.opacity = 0.3 + Math.sin(matrix.phase) * 0.2
 
         // Draw matrix notation
         ctx.save()
         ctx.translate(matrix.x, matrix.y)
         ctx.globalAlpha = matrix.opacity
 
-        const fontSize = matrix.size * 0.15
+        const fontSize = matrix.size * 0.2
         ctx.font = `${fontSize}px "SF Mono", "Monaco", "Inconsolata", monospace`
-        ctx.fillStyle = `rgba(${baseColor}, 0.6)`
+        ctx.fillStyle = `rgba(${baseColor}, 1)`
 
         // Draw bracket and matrix elements
         const spacing = matrix.size * 0.3
 
         // Left bracket
-        ctx.strokeStyle = `rgba(${baseColor}, 0.4)`
-        ctx.lineWidth = 1.5
+        ctx.strokeStyle = `rgba(${baseColor}, 1)`
+        ctx.lineWidth = 2
         ctx.beginPath()
         ctx.moveTo(-spacing * 1.2, -spacing * 1.2)
         ctx.lineTo(-spacing * 1.5, -spacing * 1.2)
@@ -103,7 +102,7 @@ export function MatrixAnimation() {
         ctx.stroke()
 
         // Draw × symbol
-        ctx.fillStyle = `rgba(${baseColor}, 0.5)`
+        ctx.fillStyle = `rgba(${baseColor}, 1)`
         ctx.fillText('×', spacing * 1.3, 0)
 
         ctx.restore()
@@ -134,7 +133,7 @@ export function MatrixAnimation() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 -z-[5] pointer-events-none"
-      style={{ opacity: 0.5 }}
+      style={{ opacity: 1 }}
     />
   )
 }

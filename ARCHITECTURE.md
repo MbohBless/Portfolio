@@ -1,342 +1,180 @@
-# Portfolio System Architecture
+# Architecture Documentation
+
+This document provides a comprehensive overview of the portfolio platform's architecture, design decisions, and technical implementation.
+
+## Table of Contents
+
+- [System Overview](#system-overview)
+- [Technology Stack](#technology-stack)
+- [Architecture Patterns](#architecture-patterns)
+- [Database Schema](#database-schema)
+- [Authentication Flow](#authentication-flow)
+- [Data Flow](#data-flow)
+- [API Design](#api-design)
+- [Security](#security)
+- [Performance](#performance)
+- [Deployment](#deployment)
 
 ## System Overview
 
-Production-grade personal portfolio platform built with **Next.js 14**, **Prisma ORM**, and **PostgreSQL**.
+The portfolio platform is a modern, full-stack web application built with Next.js 15, leveraging the App Router for optimal performance and developer experience.
 
-### Key Features
-- Public content (projects, publications, blog with MDX)
-- Admin panel for content management (protected by Supabase Auth)
-- Full-text search across all content
-- File storage for PDFs and media
-- Server-side rendering for optimal SEO
-- Direct database access (no API layer)
-
----
-
-## Technology Stack
-
-### Frontend & Backend (Unified)
-- **Framework**: Next.js 14+ (App Router, React Server Components)
-- **Language**: TypeScript 5+
-- **ORM**: Prisma 5
-- **Styling**: TailwindCSS 3+
-- **Content**: MDX for blog posts
-- **Deployment**: Vercel (serverless)
-
-### Data Layer
-- **Database**: PostgreSQL 15+ (Supabase recommended)
-- **Storage**: Supabase Storage (S3-compatible)
-- **Auth**: Supabase Auth (JWT-based)
-
-### Infrastructure
-- **Local Dev**: Docker Compose (Postgres only)
-- **CI/CD**: GitHub Actions
-- **Monitoring**: Vercel Analytics + Supabase Dashboard
-
----
-
-## Architecture Diagram
+### Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         CLIENT                               │
-│                     (Browser/Mobile)                         │
-└────────────────┬────────────────────────────────────────────┘
-                 │
-                 │ HTTPS
-                 │
-    ┌────────────▼────────────┐
-    │   Vercel Edge Network    │
-    │   (CDN + Edge Runtime)   │
-    └────────────┬─────────────┘
-                 │
-        ┌────────▼─────────┐
-        │  Next.js App     │
-        │  (Full-Stack)    │
-        │                  │
-        │  • Server        │
-        │    Components    │
-        │  • Server        │
-        │    Actions       │
-        │  • API Routes    │
-        │  • Middleware    │
-        └─────┬────────────┘
-              │
-              │ Prisma ORM
-              │
-    ┌─────────┼─────────────┐
-    │         │             │
-    │         │             │
-┌───▼─────┐ ┌─▼──────────┐ ┌▼────────────┐
-│Supabase │ │ Supabase   │ │  Supabase   │
-│Auth     │ │ Postgres   │ │  Storage    │
-│         │ │            │ │             │
-│• JWT    │ │• users     │ │• PDFs       │
-│• OAuth  │ │• projects  │ │• Images     │
-│         │ │• pubs      │ │• MDX files  │
-│         │ │• blog_posts│ │             │
-└─────────┘ └────────────┘ └─────────────┘
+│                         Frontend                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │   Public     │  │    Admin     │  │   API        │      │
+│  │   Pages      │  │    Panel     │  │   Routes     │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                 │                  │               │
+│         └─────────────────┼──────────────────┘               │
+│                           │                                  │
+│                    ┌──────▼───────┐                         │
+│                    │  Server      │                         │
+│                    │  Components  │                         │
+│                    └──────┬───────┘                         │
+└───────────────────────────┼──────────────────────────────────┘
+                            │
+                    ┌───────▼────────┐
+                    │  Prisma ORM    │
+                    └───────┬────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌──────▼───────┐  ┌───────▼────────┐
+│   PostgreSQL   │  │   Supabase   │  │   Discord      │
+│   Database     │  │   Auth       │  │   Webhook      │
+└────────────────┘  └──────────────┘  └────────────────┘
 ```
 
----
+### Key Characteristics
 
-## Request Flow Examples
+- **Monorepo Structure**: Single repository with all code in `frontend/`
+- **Server-First**: Leverages React Server Components for optimal performance
+- **Type-Safe**: Full TypeScript coverage with Prisma-generated types
+- **Zero API Layer**: Direct database access from server components
+- **Modern Patterns**: Server Actions for mutations, minimal client JavaScript
 
-### Public Page (Server Component)
-```
-1. User visits /projects
-2. Next.js Server Component executes
-3. Prisma queries: prisma.project.findMany({ where: { published: true }})
-4. HTML rendered on server with data
-5. Static HTML sent to browser
-6. React hydrates client-side
-```
+## Technology Stack
 
-**Advantages:**
-- No API roundtrip delay
-- SEO-friendly (fully rendered HTML)
-- Faster Time to First Byte (TTFB)
+### Core Framework
 
-### Admin Action (Server Action)
-```
-1. Admin submits form to create project
-2. Form calls createProject() Server Action
-3. Next.js validates JWT via middleware
-4. Server Action: prisma.project.create({ data })
-5. revalidatePath('/projects') clears cache
-6. Success response returned
-7. Page auto-updates with new data
-```
+**Next.js 15 (App Router)**
+- **Why**: Latest App Router provides superior performance with React Server Components
+- **Benefits**:
+  - Direct database access from server components
+  - Automatic code splitting
+  - Built-in optimization (images, fonts, etc.)
+  - Streaming and Suspense support
+  - Server Actions for mutations
 
-**Advantages:**
-- No REST API needed
-- Type-safe end-to-end
-- Progressive enhancement (works without JS)
+### Language & Type Safety
 
-### Search (API Route)
-```
-1. User types in search box
-2. Frontend calls GET /api/search?q=keyword
-3. API route queries Prisma across all tables
-4. Returns unified JSON results
-5. Frontend displays results
-```
+**TypeScript 5.0**
+- **Why**: Type safety prevents runtime errors and improves DX
+- **Benefits**:
+  - Catch errors at compile time
+  - Autocomplete and IntelliSense
+  - Self-documenting code
+  - Seamless integration with Prisma
 
-**Use Case:** External access or complex operations not suited for Server Actions.
+### Styling
 
-### File Upload (API Route)
-```
-1. Admin uploads file via form
-2. POST /api/upload (multipart/form-data)
-3. API route uploads to Supabase Storage
-4. Saves metadata to media_files table
-5. Returns public URL
-6. Admin uses URL in project/publication
-```
+**Tailwind CSS**
+- **Why**: Utility-first approach enables rapid development
+- **Benefits**:
+  - Consistent design system
+  - Dark mode support out of the box
+  - Minimal CSS bundle size
+  - Responsive utilities
+  - Easy customization
 
----
+### Database Layer
 
-## Database Schema
+**Prisma ORM**
+- **Why**: Best-in-class TypeScript ORM with excellent DX
+- **Benefits**:
+  - Type-safe database queries
+  - Automatic migrations
+  - Database introspection
+  - Prisma Studio for GUI management
+  - Generated types match schema
 
-### Tables
+**PostgreSQL 15+**
+- **Why**: Robust, ACID-compliant relational database
+- **Benefits**:
+  - Complex queries and relationships
+  - JSON support for flexible data
+  - Full-text search capabilities
+  - Excellent performance
+  - Supabase compatibility
 
-#### users
-```prisma
-model User {
-  id         String   @id @default(dbgenerated("gen_random_uuid()"))
-  email      String   @unique
-  name       String?
-  avatarUrl  String?
-  role       String   @default("admin")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+### Authentication
 
-  mediaFiles MediaFile[]
-}
-```
+**Supabase Auth**
+- **Why**: Production-ready auth with minimal setup
+- **Benefits**:
+  - Email/password authentication
+  - Email verification
+  - Session management
+  - JWT tokens
+  - Row-level security (RLS)
 
-#### projects
-```prisma
-model Project {
-  id           String   @id @default(dbgenerated("gen_random_uuid()"))
-  title        String
-  slug         String   @unique
-  description  String?
-  techStack    String[] @default([])
-  githubUrl    String?
-  demoUrl      String?
-  thumbnailUrl String?
-  images       String[] @default([])
-  published    Boolean  @default(false)
-  displayOrder Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-```
+### Storage
 
-#### publications
-```prisma
-model Publication {
-  id        String   @id @default(dbgenerated("gen_random_uuid()"))
-  title     String
-  slug      String   @unique
-  authors   String[]
-  year      Int
-  venue     String?
-  doi       String?
-  arxivId   String?
-  pdfUrl    String?
-  abstract  String?
-  tags      String[] @default([])
-  published Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
+**Supabase Storage**
+- **Why**: Integrated storage solution with PostgreSQL
+- **Benefits**:
+  - S3-compatible API
+  - CDN integration
+  - Access control policies
+  - Automatic optimization
+  - Same provider as database
 
-#### blog_posts
-```prisma
-model BlogPost {
-  id            String    @id @default(dbgenerated("gen_random_uuid()"))
-  title         String
-  slug          String    @unique
-  excerpt       String?
-  contentUrl    String?
-  coverImageUrl String?
-  tags          String[]  @default([])
-  published     Boolean   @default(false)
-  publishedAt   DateTime?
-  readingTime   Int       @default(0)
-  views         Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-```
+### Deployment
 
-#### media_files
-```prisma
-model MediaFile {
-  id           String   @id @default(dbgenerated("gen_random_uuid()"))
-  originalName String
-  storagePath  String
-  url          String
-  mimeType     String
-  sizeBytes    BigInt
-  uploadedBy   String?  @db.Uuid
-  metadata     Json     @default("{}")
-  createdAt    DateTime @default(now())
+**Vercel**
+- **Why**: Built by Next.js creators, optimized for the framework
+- **Benefits**:
+  - Zero-config deployment
+  - Edge network
+  - Automatic HTTPS
+  - Preview deployments
+  - Environment variables
+  - Analytics and monitoring
 
-  user User? @relation(fields: [uploadedBy], references: [id])
-}
-```
+## Architecture Patterns
 
-### Indexes
+### 1. Server Components (Default)
 
-Automatically managed by Prisma:
-```prisma
-@@index([slug])
-@@index([published])
-@@index([publishedAt(sort: Desc)])
-@@index([createdAt(sort: Desc)])
-```
-
----
-
-## Folder Structure
-
-```
-portfolio/
-├── frontend/                      # Next.js monorepo (all code)
-│   ├── src/
-│   │   ├── app/                  # App Router
-│   │   │   ├── (pages)/
-│   │   │   │   ├── page.tsx     # Home
-│   │   │   │   ├── projects/
-│   │   │   │   │   ├── page.tsx              # List
-│   │   │   │   │   └── [slug]/page.tsx       # Detail
-│   │   │   │   ├── publications/
-│   │   │   │   │   └── page.tsx
-│   │   │   │   ├── blog/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   └── [slug]/page.tsx
-│   │   │   │   └── admin/
-│   │   │   │       ├── page.tsx              # Dashboard
-│   │   │   │       ├── projects/
-│   │   │   │       ├── publications/
-│   │   │   │       └── blog/
-│   │   │   ├── actions/          # Server Actions (mutations)
-│   │   │   │   ├── projects.ts
-│   │   │   │   ├── publications.ts
-│   │   │   │   └── blog.ts
-│   │   │   ├── api/              # API Routes (external)
-│   │   │   │   ├── search/
-│   │   │   │   │   └── route.ts
-│   │   │   │   └── upload/
-│   │   │   │       └── route.ts
-│   │   │   ├── layout.tsx
-│   │   │   └── globals.css
-│   │   ├── components/           # React components
-│   │   │   ├── ui/               # Reusable UI components
-│   │   │   ├── layout/
-│   │   │   └── admin/
-│   │   ├── lib/
-│   │   │   ├── prisma.ts         # Prisma client singleton
-│   │   │   ├── supabase.ts       # Supabase client
-│   │   │   ├── auth.ts           # Auth helpers
-│   │   │   └── utils.ts
-│   │   ├── types/
-│   │   │   └── index.ts          # TypeScript types
-│   │   └── middleware.ts         # Route protection
-│   ├── prisma/
-│   │   └── schema.prisma         # Database schema
-│   ├── public/
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── tailwind.config.ts
-│   └── next.config.js
-├── migrations/                    # Legacy SQL (reference only)
-├── .github/workflows/
-│   └── frontend.yml              # CI/CD pipeline
-├── docker-compose.yml            # Local Postgres
-├── .env.example
-└── README.md
-```
-
----
-
-## Data Flow Patterns
-
-### Pattern 1: Server Component (Read)
-
-**Use Case:** Display public content
+All pages and components are Server Components by default, enabling direct database access.
 
 ```typescript
 // app/projects/page.tsx
 import { prisma } from '@/lib/prisma'
 
 export default async function ProjectsPage() {
-  // Direct database query in Server Component
+  // Direct database access - no API call needed
   const projects = await prisma.project.findMany({
     where: { published: true },
     orderBy: { displayOrder: 'asc' }
   })
 
-  return (
-    <div>
-      {projects.map(project => (
-        <ProjectCard key={project.id} project={project} />
-      ))}
-    </div>
-  )
+  return <ProjectGrid projects={projects} />
 }
 ```
 
-**Execution:** Server-side only, no client bundle impact
+**Benefits**:
+- No API roundtrip latency
+- Reduced client JavaScript
+- Better SEO (fully rendered HTML)
+- Automatic data caching
 
-### Pattern 2: Server Action (Write)
+### 2. Server Actions (Mutations)
 
-**Use Case:** Admin creates/updates content
+Forms and mutations use Server Actions instead of API routes.
 
 ```typescript
 // app/actions/projects.ts
@@ -349,315 +187,578 @@ export async function createProject(formData: FormData) {
   const project = await prisma.project.create({
     data: {
       title: formData.get('title'),
-      slug: formData.get('slug'),
       // ... other fields
     }
   })
 
-  revalidatePath('/projects') // Clear cache
-  return { success: true, project }
+  revalidatePath('/projects')
+  return { success: true, data: project }
 }
 ```
 
-**Usage in Client Component:**
+**Benefits**:
+- No API route needed
+- Type-safe parameters
+- Automatic revalidation
+- Progressive enhancement
+
+### 3. Client Components (Interactive UI)
+
+Only interactive components are marked with `'use client'`.
+
 ```typescript
+// components/ThemeToggle.tsx
 'use client'
 
-import { createProject } from '@/app/actions/projects'
+import { useTheme } from 'next-themes'
 
-export function CreateProjectForm() {
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+
   return (
-    <form action={createProject}>
-      <input name="title" />
-      <button type="submit">Create</button>
-    </form>
+    <button onClick={() => setTheme('dark')}>
+      Toggle Theme
+    </button>
   )
 }
 ```
 
-### Pattern 3: API Route (Complex Operations)
+**When to use**:
+- Event handlers (onClick, onChange, etc.)
+- React hooks (useState, useEffect, etc.)
+- Browser APIs (localStorage, window, etc.)
+- Third-party libraries requiring client-side
 
-**Use Case:** Search, file upload, webhooks
+### 4. API Routes (External Access)
+
+API routes only for external access or webhooks.
 
 ```typescript
-// app/api/search/route.ts
-import { prisma } from '@/lib/prisma'
-import { NextRequest, NextResponse } from 'next/server'
+// app/api/contact/route.ts
+export async function POST(req: Request) {
+  const body = await req.json()
 
-export async function GET(request: NextRequest) {
-  const query = request.nextUrl.searchParams.get('q')
+  // Save to database
+  await prisma.contact.create({ data: body })
 
-  const results = await prisma.$queryRaw`
-    SELECT * FROM search_all(${query}, 20)
-  `
+  // Send Discord notification
+  await sendDiscordNotification(body)
 
-  return NextResponse.json({ results })
+  return Response.json({ success: true })
 }
 ```
 
-**Usage:** Standard fetch from client or external services
+**Use cases**:
+- Contact form submissions
+- Webhooks (Discord, Stripe, etc.)
+- Public APIs
+- Third-party integrations
 
----
+## Database Schema
 
-## Authentication & Authorization
+### Entity Relationship Diagram
 
-### Flow
+```
+┌─────────────┐
+│   Profile   │
+│  (Singleton)│
+└─────────────┘
 
-1. **Login**: User authenticates via Supabase Auth (email/OAuth)
-2. **JWT Storage**: Token stored in HTTP-only cookie
-3. **Middleware**: `middleware.ts` validates JWT on protected routes
-4. **Authorization**: Check user role in Server Actions
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Project   │     │  BlogPost   │     │ Publication │
+│             │     │             │     │             │
+│ - slug      │     │ - slug      │     │ - slug      │
+│ - published │     │ - published │     │ - published │
+│ - order     │     │ - tags[]    │     │ - authors[] │
+└─────────────┘     └─────────────┘     └─────────────┘
 
-### Implementation
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│WorkExperience│    │  Education  │     │    Skill    │
+│             │     │             │     │             │
+│ - current   │     │ - current   │     │ - category  │
+│ - order     │     │ - order     │     │ - proficiency│
+└─────────────┘     └─────────────┘     └─────────────┘
+
+┌─────────────┐     ┌─────────────┐
+│   Contact   │     │    User     │
+│             │     │  (Supabase) │
+│ - read      │     │ - email     │
+│ - createdAt │     │ - role      │
+└─────────────┘     └─────────────┘
+```
+
+### Key Design Decisions
+
+1. **UUID Primary Keys**: Better for distributed systems and security
+2. **JSON Arrays**: For flexible lists (tags, authors, achievements)
+3. **Slug Fields**: SEO-friendly URLs for public content
+4. **Published Flags**: Draft/publish workflow
+5. **Display Order**: Manual sorting control
+6. **Timestamps**: Track creation and updates
+7. **Indexes**: Optimized for common queries
+
+### Schema Highlights
+
+```prisma
+model Profile {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  name            String
+  email           String
+  githubUrl       String?
+  linkedinUrl     String?
+  resumeUrl       String?
+  // ... other fields
+}
+
+model Project {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  slug            String   @unique
+  title           String
+  published       Boolean  @default(false)
+  displayOrder    Int      @default(0)
+  techStack       String[] // Array of technologies
+  // ... other fields
+
+  @@index([published, displayOrder])
+}
+
+model BlogPost {
+  id              String    @id @default(dbgenerated("gen_random_uuid()"))
+  slug            String    @unique
+  title           String
+  published       Boolean   @default(false)
+  publishedAt     DateTime?
+  tags            String[]  // Array of tags
+  // ... other fields
+
+  @@index([published, publishedAt])
+}
+```
+
+## Authentication Flow
+
+### Signup Flow
+
+```
+┌──────┐      ┌───────────┐      ┌─────────────┐      ┌──────────┐
+│User  │      │ Signup    │      │ Supabase    │      │Database  │
+│      │      │ Page      │      │ Auth        │      │          │
+└──┬───┘      └─────┬─────┘      └──────┬──────┘      └────┬─────┘
+   │                │                    │                  │
+   │   Navigate     │                    │                  │
+   ├───────────────>│                    │                  │
+   │                │                    │                  │
+   │                │  Check if users    │                  │
+   │                │  exist             │                  │
+   │                ├───────────────────>│                  │
+   │                │                    │  Query users     │
+   │                │                    ├─────────────────>│
+   │                │                    │<─────────────────┤
+   │                │<───────────────────┤                  │
+   │                │                    │                  │
+   │  Show form or  │                    │                  │
+   │  "Access Denied"                    │                  │
+   │<───────────────┤                    │                  │
+   │                │                    │                  │
+   │   Submit form  │                    │                  │
+   ├───────────────>│                    │                  │
+   │                │  Create account    │                  │
+   │                ├───────────────────>│                  │
+   │                │                    │  Store user      │
+   │                │                    ├─────────────────>│
+   │                │  Send verification │                  │
+   │                │  email             │                  │
+   │<───────────────┼────────────────────┤                  │
+```
+
+### Login Flow
+
+```
+┌──────┐      ┌───────────┐      ┌─────────────┐      ┌──────────┐
+│User  │      │ Login     │      │ Supabase    │      │Middleware│
+│      │      │ Page      │      │ Auth        │      │ (Proxy)  │
+└──┬───┘      └─────┬─────┘      └──────┬──────┘      └────┬─────┘
+   │                │                    │                  │
+   │  Submit creds  │                    │                  │
+   ├───────────────>│                    │                  │
+   │                │  Sign in           │                  │
+   │                ├───────────────────>│                  │
+   │                │                    │                  │
+   │                │  JWT + session     │                  │
+   │                │<───────────────────┤                  │
+   │                │  Set cookies       │                  │
+   │<───────────────┤                    │                  │
+   │                │                    │                  │
+   │  Navigate to   │                    │                  │
+   │  /admin        │                    │                  │
+   ├───────────────────────────────────────────────────────>│
+   │                │                    │  Verify session  │
+   │                │                    │<─────────────────┤
+   │                │                    │  Valid session   │
+   │                │                    ├─────────────────>│
+   │  Render admin  │                    │                  │
+   │<────────────────────────────────────────────────────────┤
+```
+
+### Authentication Middleware (Proxy)
 
 ```typescript
-// middleware.ts
-import { createServerClient } from '@supabase/ssr'
+// src/proxy.ts
+export async function proxy(request: NextRequest) {
+  const supabase = createServerClient(/* ... */)
 
-export async function middleware(request: NextRequest) {
-  const supabase = createServerClient(...)
+  // Refresh session
   const { data: { session } } = await supabase.auth.getSession()
 
-  if (request.nextUrl.pathname.startsWith('/admin') && !session) {
-    return NextResponse.redirect('/login')
+  // Protect /admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    const isAuthPage = pathname === '/admin/login' || pathname === '/admin/signup'
+
+    if (!session && !isAuthPage) {
+      // Redirect to login
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+
+    if (session && isAuthPage) {
+      // Already logged in, redirect to dashboard
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
   }
+
+  return response
 }
 ```
 
-### Protected Routes
+## Data Flow
 
-- `/admin/*` - Requires authentication
-- All API routes in `/api/upload/*` - Requires JWT
+### Public Page Rendering
 
----
-
-## Performance Optimizations
-
-### Server Components
-- ✅ **No JavaScript sent to client** for data fetching
-- ✅ **Parallel data fetching** with React Suspense
-- ✅ **Automatic code splitting** at component level
-
-### Caching Strategy
-```typescript
-// Revalidate every 60 seconds
-export const revalidate = 60
-
-// Or on-demand revalidation
-revalidatePath('/projects')
-revalidateTag('projects-list')
+```
+User Request
+    ↓
+Next.js Server
+    ↓
+Server Component
+    ↓
+Direct Prisma Query ──→ PostgreSQL
+    ↓
+Render HTML
+    ↓
+Send to Client
 ```
 
-### Database
-- **Connection Pooling**: Prisma handles automatically
-- **Prepared Statements**: All queries are parameterized
-- **Indexes**: Defined in Prisma schema, auto-created on migration
+### Admin Form Submission
 
-### Static Generation (ISR)
-- Blog posts: Statically generated, revalidated on change
-- Projects/Publications: ISR with 60s revalidation
-- Admin pages: Dynamic (always fresh)
+```
+User Submits Form
+    ↓
+Client Component (with Server Action)
+    ↓
+Server Action
+    ↓
+Prisma Mutation ──→ PostgreSQL
+    ↓
+Revalidate Cache
+    ↓
+Return Result
+    ↓
+Update UI
+```
 
----
+### Contact Form Flow
+
+```
+User Submits Form
+    ↓
+POST /api/contact
+    ↓
+┌─────────────┬──────────────┐
+│             │              │
+Save to DB    Send Discord   │
+    ↓         Notification   │
+PostgreSQL    Discord API    │
+    │             │          │
+    └─────────────┴──────────┘
+           ↓
+    Return Success
+           ↓
+    Show Confirmation
+```
+
+## API Design
+
+### RESTful Endpoints
+
+```
+GET  /api/profile          # Get profile data
+PUT  /api/profile          # Update profile
+
+POST /api/contact          # Submit contact form
+```
+
+### Server Actions
+
+```typescript
+// app/actions/projects.ts
+export async function createProject(data)
+export async function updateProject(id, data)
+export async function deleteProject(id)
+export async function publishProject(id)
+
+// app/actions/blog.ts
+export async function createPost(data)
+export async function updatePost(id, data)
+export async function deletePost(id)
+
+// app/actions/contacts.ts
+export async function getContacts()
+export async function markAsRead(id)
+export async function deleteContact(id)
+```
+
+### Response Formats
+
+**Success Response**:
+```typescript
+{
+  success: true,
+  data: { /* entity */ },
+  message?: "Operation successful"
+}
+```
+
+**Error Response**:
+```typescript
+{
+  success: false,
+  error: "Error message",
+  details?: { /* validation errors */ }
+}
+```
 
 ## Security
 
-### SQL Injection
-✅ **Protected**: Prisma uses prepared statements automatically
+### Authentication & Authorization
 
-### XSS
-✅ **Protected**: React escapes content by default
-⚠️ **Note**: Sanitize MDX content before storing
+1. **Single Admin Account**: Enforced at signup - only one account allowed
+2. **Email Verification**: Required before login
+3. **JWT Tokens**: Secure session management via Supabase
+4. **HTTP-Only Cookies**: Tokens stored securely, not accessible to JavaScript
+5. **Middleware Protection**: All `/admin` routes protected by proxy middleware
 
-### CSRF
-✅ **Protected**: Server Actions use built-in CSRF tokens
+### Input Validation
 
-### JWT Validation
-✅ **Protected**: Middleware validates all admin requests
+```typescript
+// Server-side validation
+export async function createProject(data: FormData) {
+  // Validate required fields
+  if (!data.get('title') || !data.get('slug')) {
+    return { success: false, error: 'Missing required fields' }
+  }
 
-### Rate Limiting
-⚠️ **TODO**: Add rate limiting middleware for API routes
+  // Sanitize inputs
+  const title = sanitize(data.get('title'))
 
----
-
-## Deployment
-
-### Vercel (Recommended)
-
-**Step 1:** Connect GitHub repo
-
-**Step 2:** Configure project
-```
-Root Directory: frontend
-Framework: Next.js
-Build Command: npm run build
-```
-
-**Step 3:** Environment Variables
-```
-DATABASE_URL=postgresql://...
-NEXT_PUBLIC_SUPABASE_URL=https://...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-```
-
-**Step 4:** Deploy
-- Automatic on push to `main`
-- Preview deployments on PRs
-
-### Database Migrations
-
-```bash
-# Option 1: Prisma Migrate (production)
-npx prisma migrate deploy
-
-# Option 2: Prisma Push (development)
-npx prisma db push
-```
-
-Run from Vercel Build Command:
-```json
-{
-  "build": "prisma generate && prisma migrate deploy && next build"
+  // Prevent SQL injection (Prisma handles this)
+  await prisma.project.create({ data: { title } })
 }
 ```
 
----
+### Environment Variables
 
-## Monitoring & Observability
+**Public** (NEXT_PUBLIC_*):
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SITE_URL`
 
-### Logs
-- **Server-side**: Vercel Functions logs
-- **Client-side**: Vercel Web Analytics
-- **Database**: Supabase Dashboard (query performance)
+**Private** (Server-only):
+- `DATABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `DISCORD_WEBHOOK_URL`
 
-### Metrics
-- **Web Vitals**: Tracked by Vercel Analytics
-- **Database**: Connection pool, query latency (Supabase)
-- **Errors**: Console logs → Sentry (optional)
+### CORS & CSP
 
-### Alerts
-- Vercel: Deployment failures, quota warnings
-- Supabase: Disk usage, slow queries
-
----
-
-## Cost Analysis
-
-### Monthly Costs
-
-| Service | Tier | Features | Cost |
-|---------|------|----------|------|
-| **Vercel** | Hobby | 100GB bandwidth, serverless functions | **$0** |
-| **Supabase** | Free | 500MB DB, 1GB storage, 50K auth users | **$0** |
-| **Domain** | - | .com from Namecheap | **$1-2** |
-| **Total** | | | **$1-2/mo** |
-
-### Scaling Costs
-
-| Tier | Traffic | Cost |
-|------|---------|------|
-| Hobby/Free | <100K visitors/mo | **$0-2** |
-| Pro | 100K-1M visitors/mo | **$20-50** |
-| Enterprise | >1M visitors/mo | **Custom** |
-
----
-
-## Development Workflow
-
-### Local Setup
-```bash
-# 1. Start database
-docker-compose up -d
-
-# 2. Install dependencies
-cd frontend && npm install
-
-# 3. Setup database
-npm run db:push
-
-# 4. Start dev server
-npm run dev
+```typescript
+// API routes include CORS headers
+headers: {
+  'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL,
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
 ```
 
-### Making Schema Changes
-```bash
-# 1. Edit prisma/schema.prisma
-# 2. Push changes
-npm run db:push
+### Rate Limiting
 
-# 3. Regenerate client
-npm run db:generate
+Implemented at edge level via Vercel:
+- Protects against brute force attacks
+- Limits API requests per IP
+- Configurable per route
+
+## Performance
+
+### Optimization Strategies
+
+1. **React Server Components**
+   - Zero client JavaScript for static content
+   - Direct database access
+   - Streaming and Suspense
+
+2. **Incremental Static Regeneration (ISR)**
+   ```typescript
+   export const revalidate = 60 // Revalidate every 60 seconds
+   ```
+
+3. **Image Optimization**
+   - Next.js automatic image optimization
+   - WebP format conversion
+   - Responsive images
+   - Lazy loading
+
+4. **Code Splitting**
+   - Automatic route-based splitting
+   - Dynamic imports for heavy components
+   - Minimal client JavaScript
+
+5. **Database Indexes**
+   ```prisma
+   @@index([published, displayOrder])
+   @@index([published, publishedAt])
+   ```
+
+6. **Edge Caching**
+   - Vercel Edge Network
+   - Cached at 300+ global locations
+   - Automatic cache invalidation
+
+### Performance Metrics
+
+**Target Metrics**:
+- Lighthouse Score: 95+
+- First Contentful Paint: < 1.5s
+- Time to Interactive: < 3.5s
+- Cumulative Layout Shift: < 0.1
+
+## Deployment
+
+### Production Architecture
+
+```
+┌────────────────────────────────────────────────────┐
+│                  Vercel Edge Network               │
+│  ┌──────────────────────────────────────────────┐ │
+│  │          CDN (300+ locations)                │ │
+│  │  - Static assets                             │ │
+│  │  - Cached pages                              │ │
+│  └──────────────────────────────────────────────┘ │
+└──────────────────┬─────────────────────────────────┘
+                   │
+        ┌──────────▼──────────┐
+        │   Next.js Server    │
+        │   (Serverless)      │
+        └──────────┬──────────┘
+                   │
+    ┌──────────────┼──────────────┐
+    │              │              │
+┌───▼────┐  ┌─────▼─────┐  ┌────▼────┐
+│Supabase│  │ Supabase  │  │ Discord │
+│  DB    │  │   Auth    │  │Webhooks │
+└────────┘  └───────────┘  └─────────┘
 ```
 
-### Adding New Features
-```bash
-# 1. Create Server Action in app/actions/
-# 2. Create page in app/(pages)/
-# 3. Test locally
-# 4. Commit and push (auto-deploys)
+### Deployment Process
+
+1. **Code Push**
+   ```bash
+   git push origin main
+   ```
+
+2. **Automatic Build** (Vercel)
+   - Install dependencies
+   - Run type checking
+   - Build production bundle
+   - Generate static pages
+
+3. **Deploy to Edge**
+   - Deploy to global edge network
+   - Update DNS
+   - Automatic HTTPS
+
+4. **Database Migration** (if needed)
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+### Environment Separation
+
+**Development**:
+- Local PostgreSQL (Docker)
+- Local Supabase emulator (optional)
+- Test Discord webhook
+
+**Production**:
+- Supabase PostgreSQL
+- Supabase Auth
+- Production Discord webhook
+
+### Monitoring & Logging
+
+**Vercel Analytics**:
+- Real User Monitoring (RUM)
+- Web Vitals tracking
+- Error tracking
+- Performance insights
+
+**Logs**:
+- Server logs via Vercel dashboard
+- Database logs via Supabase
+- Custom logging with `console.log` (development)
+
+### Backup Strategy
+
+1. **Database**: Supabase automated daily backups
+2. **Code**: Git version control
+3. **Environment**: `.env.local.example` in repository
+4. **Content**: Periodic Prisma Studio exports
+
+## Scalability Considerations
+
+### Horizontal Scaling
+
+- **Serverless Functions**: Auto-scale with traffic
+- **Edge Network**: Distributed globally
+- **Database**: Supabase handles connection pooling
+
+### Caching Strategy
+
+```typescript
+// Route-level caching
+export const revalidate = 60
+
+// Per-request caching
+const projects = await prisma.project.findMany({
+  where: { published: true },
+  // Cached for 1 hour
+  cache: 'force-cache',
+  next: { revalidate: 3600 }
+})
 ```
 
----
+### Future Improvements
 
-## Why This Architecture?
+1. **Full-text Search**: PostgreSQL full-text search or Algolia
+2. **CDN for Media**: Cloudinary or Imgix integration
+3. **Email Service**: SendGrid or Resend for transactional emails
+4. **Analytics**: PostHog or Plausible for privacy-friendly analytics
+5. **CMS Integration**: Sanity or Contentful for non-technical users
 
-### Advantages Over Microservices
+## Conclusion
 
-| **Microservices** (Old) | **Monolith** (Current) |
-|--------------------------|------------------------|
-| Multiple repos to sync | Single source of truth |
-| Network latency between services | In-process function calls |
-| Complex deployment coordination | One-click deployment |
-| Polyglot infrastructure overhead | Unified TypeScript stack |
-| $25-50/mo minimum cost | $0 with free tiers |
+This architecture provides a modern, scalable, and maintainable foundation for a personal portfolio platform. Key benefits:
 
-### When to Consider Splitting
+- **Developer Experience**: Type-safe, minimal boilerplate, fast iteration
+- **Performance**: Server-first approach, edge caching, optimized assets
+- **Cost-Effective**: Free tier covers most use cases ($0-27/month)
+- **Secure**: Industry-standard auth, input validation, secure secrets
+- **Scalable**: Serverless architecture, global CDN, efficient caching
 
-Only if you need:
-1. **Independent scaling** of different services (unlikely for portfolio)
-2. **Polyglot teams** (different languages per service)
-3. **Strict isolation** between business domains
-4. **Compliance** requirements (data locality, separate audit logs)
-
-For a portfolio site: **Monolith is optimal.**
-
----
-
-## Future Enhancements
-
-### Phase 1 (Immediate)
-- [ ] Admin UI forms for CRUD operations
-- [ ] MDX rendering with `next-mdx-remote`
-- [ ] Login page with Supabase Auth
-
-### Phase 2 (Short-term)
-- [ ] Newsletter integration (Resend/SendGrid)
-- [ ] Comment system (Giscus/GitHub Discussions)
-- [ ] Dark mode toggle
-
-### Phase 3 (Long-term)
-- [ ] Full-text search with PostgreSQL `tsvector` (already in schema)
-- [ ] Analytics dashboard (view counts, popular posts)
-- [ ] RSS feed generation
-- [ ] Sitemap auto-generation
-- [ ] E2E tests with Playwright
-
----
-
-## References
-
-- **Next.js Docs**: https://nextjs.org/docs
-- **Prisma Docs**: https://www.prisma.io/docs
-- **Supabase Docs**: https://supabase.com/docs
-- **Vercel Deployment**: https://vercel.com/docs
-
----
-
-## Support
-
-For issues or questions:
-1. Check README.md for common problems
-2. Review Prisma schema for database structure
-3. Inspect Server Actions for mutation logic
-4. Check middleware.ts for auth flow
+The monolithic Next.js approach eliminates complexity of separate frontend/backend while maintaining flexibility through server components, server actions, and API routes where needed.

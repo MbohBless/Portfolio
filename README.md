@@ -1,303 +1,477 @@
-# Portfolio System
+# AI/ML Portfolio Platform
 
-Production-grade personal portfolio platform built with Next.js, Prisma, and PostgreSQL.
+A modern, production-ready personal portfolio system built for AI engineers, researchers, and software developers. Features a powerful admin panel, markdown blog, publication management, and real-time Discord notifications.
 
-## Architecture
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.0-2D3748)](https://www.prisma.io/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design.
+## Features
+
+- **Dynamic Content Management** - Projects, blog posts, publications, work experience, education, and skills
+- **Markdown Support** - Write blog posts and project descriptions in markdown with syntax highlighting
+- **Admin Dashboard** - Secure admin panel with authentication and content management
+- **Theme System** - Light, dark, and system theme modes with smooth transitions
+- **Discord Notifications** - Real-time contact form notifications via Discord webhooks
+- **Background Animations** - Page-specific canvas animations (network graphs, matrix effects, code rain)
+- **Responsive Design** - Mobile-first design with Tailwind CSS
+- **SEO Optimized** - Meta tags, Open Graph, and semantic HTML
+- **Type-Safe** - Full TypeScript coverage with Prisma-generated types
+- **Zero-Cost Hosting** - Deploy for free on Vercel
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router, TypeScript, Tailwind CSS, MDX)
-- **ORM**: Prisma 5
-- **Database**: PostgreSQL 15+ (Supabase recommended)
-- **Storage**: Supabase Storage
-- **Auth**: Supabase Auth (JWT)
-- **Deployment**: Vercel
+| Category | Technology |
+|----------|-----------|
+| **Framework** | Next.js 15 (App Router) |
+| **Language** | TypeScript 5.0 |
+| **Styling** | Tailwind CSS |
+| **Database** | PostgreSQL 15+ |
+| **ORM** | Prisma 5 |
+| **Auth** | Supabase Auth |
+| **Storage** | Supabase Storage |
+| **Deployment** | Vercel |
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL (or Supabase account)
+- Discord server (optional, for notifications)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd portfolio
+   ```
+
+2. **Install dependencies**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+   Edit `.env.local` with your credentials:
+   ```bash
+   # Database
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/portfolio
+
+   # Supabase Configuration
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+   # Optional: Discord Notifications
+   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook-url
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   ```
+
+4. **Initialize the database**
+   ```bash
+   npm run db:push
+   npm run db:generate
+   ```
+
+5. **Seed sample data** (Optional but recommended)
+
+   Populate the database with sample content to see how the portfolio looks:
+   ```bash
+   npm run db:seed
+   ```
+
+   This creates:
+   - Sample profile with contact info
+   - 3 project showcases
+   - 2 blog posts
+   - 2 research publications
+   - Work experience and education
+   - Skills with proficiency levels
+
+   **Note**: You can customize or delete this sample data later through the admin panel.
+
+6. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+7. **Create your admin account**
+   - Navigate to `http://localhost:3000/admin/signup`
+   - Create your account (only one admin allowed)
+   - Verify email via Supabase
+   - Login at `/admin/login`
+
+8. **Explore your portfolio**
+   - View sample content at `http://localhost:3000`
+   - Edit/delete sample data via admin panel
+   - Replace with your actual content
 
 ## Project Structure
 
 ```
-portfolio/
-├── frontend/              # Next.js monorepo (all code here)
-│   ├── src/
-│   │   ├── app/          # Pages & API routes
-│   │   │   ├── actions/  # Server Actions (mutations)
-│   │   │   └── api/      # API routes (search, upload)
-│   │   ├── lib/          # Prisma, Supabase, utilities
-│   │   └── types/        # TypeScript definitions
-│   ├── prisma/           # Database schema
-│   └── public/           # Static assets
-├── migrations/           # Legacy SQL migrations (reference)
-├── .github/workflows/   # CI/CD pipeline
-└── docker-compose.yml   # Local Postgres
+frontend/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (pages)/           # Public pages
+│   │   │   ├── page.tsx       # Homepage
+│   │   │   ├── projects/      # Projects showcase
+│   │   │   ├── blog/          # Blog posts
+│   │   │   └── publications/  # Research papers
+│   │   ├── admin/             # Admin dashboard
+│   │   │   ├── profile/       # Profile settings
+│   │   │   ├── projects/      # Manage projects
+│   │   │   ├── blog/          # Manage blog posts
+│   │   │   ├── publications/  # Manage publications
+│   │   │   └── contacts/      # View submissions
+│   │   ├── api/               # API routes
+│   │   │   ├── contact/       # Contact form + Discord
+│   │   │   └── profile/       # Profile data
+│   │   └── actions/           # Server actions
+│   ├── components/            # React components
+│   │   ├── animations/        # Canvas animations
+│   │   ├── Button.tsx         # UI components
+│   │   └── ...
+│   ├── lib/                   # Utilities
+│   │   ├── prisma.ts          # Prisma client
+│   │   └── auth-client.ts     # Auth helpers
+│   └── proxy.ts               # Auth middleware
+├── prisma/
+│   └── schema.prisma          # Database schema
+├── public/                    # Static assets
+└── package.json
 ```
 
-## Prerequisites
+## Usage Guide
 
-- Node.js 20+
-- Docker & Docker Compose
-- Supabase account
+### Managing Your Profile
 
-## Quick Start
+1. Navigate to `/admin/profile`
+2. Configure:
+   - Personal information (name, title, bio)
+   - Contact details (email, phone, location)
+   - Social links (GitHub, LinkedIn, Twitter)
+   - Profile image and resume URLs
+   - Hero section text
+   - Availability status
 
-### 1. Clone and Configure
+### Adding Projects
+
+1. Go to `/admin/projects` → **New Project**
+2. Fill in project details:
+   - Title and description
+   - Markdown content with code examples
+   - Tech stack (comma-separated)
+   - Links (GitHub, demo, docs)
+   - Display order
+3. Toggle **Published** to make it visible
+
+**Note**: First 3 published projects appear on homepage
+
+### Writing Blog Posts
+
+1. Go to `/admin/blog` → **New Post**
+2. Write in markdown:
+   - Supports code blocks with syntax highlighting
+   - Images via markdown syntax
+   - Custom components (if configured)
+3. Set excerpt, tags, and reading time
+4. Choose publication date
+5. Toggle **Published** when ready
+
+**Note**: 3 most recent posts appear on homepage
+
+### Adding Publications
+
+1. Go to `/admin/publications`
+2. Add research papers with:
+   - Title, authors, venue, year
+   - Abstract
+   - PDF URL, DOI, arXiv ID
+   - Tags for categorization
+
+**Note**: Cards link to external resources (PDF/DOI/arXiv)
+
+### Contact Form Notifications
+
+Get instant Discord notifications when someone contacts you:
+
+1. **Create Discord Webhook**:
+   - Server Settings → Integrations → Webhooks
+   - Create new webhook
+   - Copy webhook URL
+
+2. **Add to environment**:
+   ```bash
+   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+   ```
+
+3. **Restart server** to apply changes
+
+You'll receive formatted Discord messages with:
+- Sender name and email
+- Message content
+- Direct link to admin panel
+- Timestamp and contact ID
+
+### Viewing Contact Submissions
+
+Navigate to `/admin/contacts` to:
+- View all messages
+- Filter by read/unread status
+- Mark as read/unread
+- Delete old submissions
+- Click email to reply directly
+
+## Customization
+
+### Theme Settings
+
+Change default theme in `src/app/layout.tsx`:
+
+```typescript
+<ThemeProvider
+  attribute="class"
+  defaultTheme="light"  // Options: "light", "dark", "system"
+  enableSystem
+>
+```
+
+### Background Animations
+
+Page-specific animations in `src/components/animations/`:
+
+- **MatrixAnimation** - Publications page (floating matrices)
+- **CodeAnimation** - Blog pages (code snippets + binary rain)
+- **NetworkAnimation** - Projects page (network graph)
+- **HeroBackground** - Homepage (gradient effects)
+
+Customize by editing animation files or remove component from page.
+
+### Color Scheme
+
+Modify `tailwind.config.ts` to change:
+- Primary/secondary colors
+- Dark mode variants
+- Typography styles
+- Spacing/sizing
+
+### Adding New Sections
+
+1. **Update database schema**:
+   ```bash
+   # Edit prisma/schema.prisma
+   npm run db:push
+   npm run db:generate
+   ```
+
+2. **Create admin UI**: Add page in `src/app/admin/`
+3. **Create public view**: Add page in `src/app/`
+4. **Add server actions**: Create mutations in `src/app/actions/`
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. **Import project to Vercel**
+   - Connect your GitHub repository
+   - Set root directory to `frontend`
+   - Framework preset: Next.js
+
+2. **Configure environment variables**
+
+   Add all variables from `.env.local`:
+   ```
+   DATABASE_URL
+   NEXT_PUBLIC_SUPABASE_URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   SUPABASE_SERVICE_ROLE_KEY
+   DISCORD_WEBHOOK_URL (optional)
+   NEXT_PUBLIC_SITE_URL
+   ```
+
+3. **Set up database**
+   - Use Supabase PostgreSQL (recommended)
+   - After first deploy, run migrations:
+     ```bash
+     npm run db:push
+     ```
+
+4. **Configure Supabase Storage**
+   - Create bucket: `portfolio-files`
+   - Set appropriate access policies
+
+5. **Deploy**
+   - Push to `main` branch
+   - Vercel auto-deploys on commits
+
+### Custom Domain
+
+1. Add domain in Vercel dashboard
+2. Update DNS records with your registrar
+3. SSL certificate auto-provisioned
+4. Update `NEXT_PUBLIC_SITE_URL` environment variable
+
+## Development
+
+### Available Scripts
 
 ```bash
-git clone <your-repo-url>
-cd portfolio
+# Development
+npm run dev              # Start dev server
 
-# Copy environment file
-cp frontend/.env.local.example frontend/.env.local
+# Database
+npm run db:push          # Push schema changes (no migration)
+npm run db:migrate       # Create migration files
+npm run db:generate      # Generate Prisma client
+npm run db:studio        # Open Prisma Studio GUI
+npm run db:seed          # Populate database with sample data
 
-# Edit with your Supabase credentials
+# Build
+npm run build            # Production build
+npm start                # Start production server
+
+# Code Quality
+npm run type-check       # TypeScript validation
+npm run lint             # ESLint
 ```
-
-### 2. Start Local Database
-
-```bash
-docker-compose up -d postgres
-```
-
-### 3. Set up Prisma
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Generate Prisma Client
-npm run db:generate
-
-# Push schema to database (creates tables)
-npm run db:push
-
-# Or run migrations
-npm run db:migrate
-```
-
-### 4. Start Development Server
-
-```bash
-npm run dev
-
-# Frontend runs on http://localhost:3000
-```
-
-## Development Workflow
 
 ### Database Operations
 
+**Development workflow** (faster, no migration files):
 ```bash
-cd frontend
-
-# Generate Prisma Client (after schema changes)
-npm run db:generate
-
-# Push schema to database (no migration files)
+# Make schema changes
 npm run db:push
-
-# Create migration (for production)
-npm run db:migrate
-
-# Open Prisma Studio (GUI for database)
-npm run db:studio
+npm run db:generate
 ```
 
-### Frontend Development
-
+**Production workflow** (creates migration history):
 ```bash
-cd frontend
-
-# Development server
-npm run dev
-
-# Type checking
-npm run type-check
-
-# Linting
-npm run lint
-
-# Production build
-npm run build
-npm start
+# Make schema changes
+npm run db:migrate
+npm run db:generate
 ```
 
-## Key Features
+### Architecture Pattern
 
-### Server Components (Direct DB Access)
+This portfolio uses modern Next.js patterns:
 
-Pages query the database directly—no API calls needed:
+- **Server Components**: Direct database access, no API calls
+- **Server Actions**: Form mutations without REST endpoints
+- **Client Components**: Interactive UI (theme toggle, forms)
+- **API Routes**: External access only (contact form, webhooks)
 
+Example Server Component:
 ```typescript
 // app/projects/page.tsx
 import { prisma } from '@/lib/prisma'
 
 export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
-    where: { published: true },
+    where: { published: true }
   })
   return <ProjectGrid projects={projects} />
 }
 ```
 
-### Server Actions (Mutations)
+## Best Practices
 
-Forms use Server Actions instead of API routes:
+### Content
 
-```typescript
-// app/actions/projects.ts
-'use server'
-
-export async function createProject(data) {
-  const project = await prisma.project.create({ data })
-  revalidatePath('/projects')
-  return { success: true, data: project }
-}
-```
-
-### API Routes (External Access)
-
-Only needed for external calls or complex operations:
-
-- `GET /api/search` - Full-text search
-- `POST /api/upload` - File upload to Supabase Storage
-
-## Environment Variables
-
-### Required (frontend/.env.local)
-
-```bash
-# Database
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/portfolio
-
-# Supabase (Public)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-
-# Supabase (Server-only)
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SUPABASE_STORAGE_BUCKET=portfolio-files
-```
-
-## Deployment
-
-### Vercel (Recommended)
-
-1. Connect GitHub repo to Vercel
-2. Set root directory to `frontend`
-3. Add environment variables in Vercel dashboard
-4. Deploy automatically on push to `main`
-
-### Required Secrets
-
-- `DATABASE_URL` - Production Postgres connection string
-- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key
-- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
-
-### Database Setup (Supabase)
-
-1. Create Supabase project
-2. In Vercel, set `DATABASE_URL` to Supabase connection string
-3. Run `npm run db:push` to create tables
-4. Create storage bucket: `portfolio-files`
-5. Enable Auth providers (Email, OAuth, etc.)
-
-## Common Tasks
-
-### Adding Content
-
-Use Prisma Studio for easy data management:
-
-```bash
-cd frontend
-npm run db:studio
-```
-
-Or use Server Actions from the admin panel (once auth is set up).
-
-### Creating a Blog Post
-
-1. Write MDX content
-2. Upload to Supabase Storage
-3. Create blog post entry with `contentUrl` pointing to file
-
-### Running Search
-
-```bash
-curl "http://localhost:3000/api/search?q=keyword"
-```
-
-## Schema Changes
-
-When you modify `frontend/prisma/schema.prisma`:
-
-```bash
-# Development (instant, no migration files)
-npm run db:push
-
-# Production (creates migration)
-npm run db:migrate
-
-# Then regenerate client
-npm run db:generate
-```
-
-## Testing
-
-```bash
-cd frontend
-npm run type-check  # TypeScript validation
-npm run lint        # ESLint
-```
-
-## Troubleshooting
-
-### Database Connection Failed
-
-- Ensure Postgres is running: `docker-compose ps`
-- Check `DATABASE_URL` in `.env.local`
-- Verify Prisma schema: `npx prisma validate`
-
-### Prisma Client Not Found
-
-```bash
-npm run db:generate
-```
-
-### Auth Not Working
-
-- Verify Supabase credentials in `.env.local`
-- Check middleware is enabled (`frontend/src/middleware.ts`)
-- Ensure `/admin` routes are protected
-
-## Architecture Benefits
-
-### vs. Separate Backend
-
-| **Before** (Ktor Backend) | **Now** (Next.js Only) |
-|---------------------------|------------------------|
-| 2 repos to maintain | 1 monorepo |
-| API calls between services | Direct DB access |
-| Separate deployments | Single deployment |
-| JVM cold starts | Edge/Node.js (fast) |
-| ~$25-50/mo hosting | $0 on Vercel Free |
+- **SEO-friendly slugs**: Keep short, descriptive
+- **Image optimization**: Compress before upload
+- **Good excerpts**: Shown in cards and search results
+- **Consistent tags**: Use standard naming conventions
+- **Display order**: Control featured content on homepage
 
 ### Performance
 
-- **Server Components**: No API roundtrips, data fetched directly
-- **Server Actions**: Form mutations without REST endpoints
-- **ISR**: Static generation with 60s revalidation
-- **Edge Runtime**: Auth middleware runs on edge
+- Uses Incremental Static Regeneration (ISR)
+- Image optimization with Next.js Image
+- Edge runtime for auth middleware
+- Automatic code splitting
 
-## Cost Estimate (Monthly)
+### Security
 
-| Service | Tier | Cost |
-|---------|------|------|
-| Vercel | Hobby | $0 |
-| Supabase | Free/Pro | $0-25 |
-| Domain | Namecheap | $1-2 |
+- Single admin account enforcement
+- Environment variables never committed
+- Service role key kept server-side only
+- CORS headers on API routes
+- Authentication on all admin routes
+
+### Backup
+
+- **Database**: Supabase provides automatic backups
+- **Content**: Export via Prisma Studio regularly
+- **Files**: Download from Supabase Storage
+- **Config**: Keep `.env.local.example` updated
+
+## Troubleshooting
+
+### Styles not updating
+```bash
+rm -rf .next
+npm run dev
+```
+
+### Database out of sync
+```bash
+npm run db:push
+npm run db:generate
+```
+
+### Authentication issues
+- Verify Supabase credentials in `.env.local`
+- Check email confirmation in Supabase dashboard
+- Clear browser cookies
+- Review `src/proxy.ts` middleware configuration
+
+### Build failures
+```bash
+npm run type-check  # Check TypeScript errors
+# Review Vercel build logs for specific errors
+```
+
+### Discord notifications not working
+- Verify `DISCORD_WEBHOOK_URL` is set correctly
+- Check webhook channel permissions
+- Test webhook manually with curl
+- Review server logs for error messages
+
+## Cost Breakdown
+
+| Service | Tier | Monthly Cost |
+|---------|------|--------------|
+| **Vercel** | Hobby | $0 |
+| **Supabase** | Free/Pro | $0-25 |
+| **Domain** | Various | $1-2 |
 | **Total** | | **$1-27/mo** |
 
+Free tier includes:
+- Unlimited deployments
+- SSL certificates
+- CDN
+- 500MB Postgres storage
+- 1GB file storage
+- Email auth
+
+## Support
+
+- **Documentation**: See detailed guides above
+- **Issues**: Open GitHub issue for bugs
+- **Architecture**: See `ARCHITECTURE.md` for system design
+
+## License
+
+MIT License - feel free to use for your own portfolio
+
+---
+
+Built with ❤️ using Next.js, TypeScript, and Prisma

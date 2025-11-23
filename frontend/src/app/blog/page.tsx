@@ -9,9 +9,10 @@ export const dynamic = 'force-dynamic'
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: { page?: string }
+  searchParams: Promise<{ page?: string }>
 }) {
-  const page = Number(searchParams.page) || 1
+  const params = await searchParams
+  const page = Number(params.page) || 1
   const pageSize = 12
   const skip = (page - 1) * pageSize
 

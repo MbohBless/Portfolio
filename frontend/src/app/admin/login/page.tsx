@@ -115,14 +115,14 @@ export default function LoginPage() {
         </div>
 
         {/* Dev note */}
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 text-sm">
+        {/* <div className="mt-8 p-4 bg-blue-50 border border-blue-200 text-sm">
           <p className="font-semibold mb-2">📋 Troubleshooting Login Issues?</p>
           <ol className="text-gray-700 space-y-1 list-decimal list-inside">
             <li>Open browser DevTools console (F12) to see debug logs</li>
             <li>Check your email inbox for verification link</li>
             <li>See <code className="bg-blue-100 px-1">LOGIN_TROUBLESHOOTING.md</code> for detailed help</li>
           </ol>
-        </div>
+        </div> */}
       </div>
     </div>
   )

@@ -101,13 +101,13 @@ export function CodeAnimation() {
       codeElements.forEach((element) => {
         // Update opacity with sine wave
         element.phase += element.speed * 0.02
-        element.opacity = 0.03 + Math.sin(element.phase) * 0.03
+        element.opacity = 0.25 + Math.sin(element.phase) * 0.15
 
         // Draw code text
         ctx.save()
         ctx.globalAlpha = element.opacity
-        ctx.font = '16px "SF Mono", "Monaco", "Inconsolata", monospace'
-        ctx.fillStyle = `rgba(${accentColor}, 0.6)`
+        ctx.font = '20px "SF Mono", "Monaco", "Inconsolata", monospace'
+        ctx.fillStyle = `rgba(${accentColor}, 1)`
         ctx.fillText(element.text, element.x, element.y)
         ctx.restore()
 
@@ -122,12 +122,12 @@ export function CodeAnimation() {
         if (element.x > canvas.width + 50) element.x = -50
       })
 
-      // Draw binary rain (very subtle)
+      // Draw binary rain
       binaryColumns.forEach((column) => {
         ctx.save()
-        ctx.globalAlpha = 0.02
-        ctx.font = '12px "SF Mono", "Monaco", "Inconsolata", monospace'
-        ctx.fillStyle = `rgba(${baseColor}, 0.5)`
+        ctx.globalAlpha = 0.2
+        ctx.font = '14px "SF Mono", "Monaco", "Inconsolata", monospace'
+        ctx.fillStyle = `rgba(${baseColor}, 1)`
 
         column.chars.forEach((char, i) => {
           ctx.fillText(char, column.x, column.y + i * 20)
@@ -169,7 +169,7 @@ export function CodeAnimation() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 -z-[5] pointer-events-none"
-      style={{ opacity: 0.6 }}
+      style={{ opacity: 1 }}
     />
   )
 }

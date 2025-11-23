@@ -68,7 +68,7 @@ async function main() {
     await prisma.publication.create({
       data: pub,
     })
-    console.log(`✅ Created publication: ${pub.title} (${pub.year})`)
+    // console.log(`✅ Created publication: ${pub.title} (${pub.year})`)
   }
 
   console.log('✨ Seeding completed!')

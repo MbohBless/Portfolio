@@ -72,10 +72,10 @@ async function main() {
     await prisma.education.create({
       data: edu,
     })
-    console.log(`✅ Created education: ${edu.degree} in ${edu.fieldOfStudy} from ${edu.institution}`)
+    // console.log(`✅ Created education: ${edu.degree} in ${edu.fieldOfStudy} from ${edu.institution}`)
   }
 
-  console.log('✨ Seeding completed!')
+  // console.log('✨ Seeding completed!')
 }
 
 main()

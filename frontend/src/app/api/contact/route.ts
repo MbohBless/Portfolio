@@ -1,6 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+async function sendDiscordNotification(name: string, email: string, message: string, contactId: string) {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL
+
+  if (!webhookUrl) {
+    console.warn('⚠️ Discord webhook URL not configured')
+    return
+  }
+
+  try {
+    const embed = {
+      title: 'New Contact Form Submission',
+      color: 0x5865F2, // Discord blurple color
+      fields: [
+        {
+          name: 'Name',
+          value: name,
+          inline: true,
+        },
+        {
+          name: 'Email',
+          value: email,
+          inline: true,
+        },
+        {
+          name: 'Message',
+          value: message.length > 1024 ? message.substring(0, 1021) + '...' : message,
+          inline: false,
+        },
+        {
+          name: 'Admin Link',
+          value: `[View in Admin Panel](${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin/contacts)`,
+          inline: false,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+      footer: {
+        text: `Contact ID: ${contactId}`,
+      },
+    }
+
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: 'Portfolio Contact Form',
+        avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
+        embeds: [embed],
+      }),
+    })
+
+  } catch (error) {
+    console.error('Failed to send Discord notification:', error)
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { name, email, message } = await req.json()
@@ -20,17 +77,11 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Log to console for debugging
-    console.log('📧 Contact Form Submission saved:', contact.id)
+    console.log('Contact Form Submission saved:', contact.id)
 
-    // TODO: Integrate with email service (Resend, SendGrid, or Nodemailer)
-    // Example with Resend:
-    // await resend.emails.send({
-    //   from: 'noreply@yourdomain.com',
-    //   to: 'your-email@example.com',
-    //   subject: `Contact form: ${name}`,
-    //   text: `From: ${name} (${email})\n\nMessage:\n${message}`
-    // })
+    sendDiscordNotification(name, email, message, contact.id).catch((err) =>
+      console.error('Discord notification error:', err)
+    )
 
     return NextResponse.json({
       success: true,

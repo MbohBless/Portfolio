@@ -98,7 +98,7 @@ async function main() {
     await prisma.project.create({
       data: project,
     })
-    console.log(`✅ Created project: ${project.title}`)
+    // console.log(`✅ Created project: ${project.title}`)
   }
 
   console.log('✨ Seeding completed!')
