@@ -48,3 +48,4 @@ coverage/
 postgres_data/
 
 # Markdown: ignore all .md files except README and architecture (cover common case variants)
+*env.txt
