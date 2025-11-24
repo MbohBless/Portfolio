@@ -168,20 +168,7 @@ HTTP 400 Bad Request
    cp .env.local.example .env.local
    ```
 
-   Edit `.env.local` with your credentials:
-   ```bash
-   # Database
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/portfolio
-
-   # Supabase Configuration
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-   # Optional: Discord Notifications
-   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook-url
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
-   ```
+   Edit `.env.local` with your credentials (see [Environment Variables](#environment-variables) section below for details)
 
 4. **Initialize the database**
    ```bash
@@ -221,6 +208,150 @@ HTTP 400 Bad Request
    - View sample content at `http://localhost:3000`
    - Edit/delete sample data via admin panel
    - Replace with your actual content
+
+## Environment Variables
+
+All environment variables needed to run this portfolio system:
+
+### Required Variables
+
+```bash
+# Database Connection
+DATABASE_URL="postgresql://user:password@host:5432/database"
+# For local development: postgresql://postgres:postgres@localhost:5432/portfolio
+# For production (Supabase): Use connection pooling URL for serverless environments
+# Format: postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+
+# Supabase Authentication (Required)
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+# Get from: Supabase Dashboard → Settings → API → Project URL
+
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key-here"
+# Get from: Supabase Dashboard → Settings → API → Project API keys → anon public
+
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key-here"
+# Get from: Supabase Dashboard → Settings → API → Project API keys → service_role (Keep secret!)
+
+# Supabase Storage (Required for file uploads)
+SUPABASE_STORAGE_BUCKET="documents_bucket"
+# Create bucket in: Supabase Dashboard → Storage → New bucket
+```
+
+### Optional Variables
+
+```bash
+# Discord Webhook Notifications (Optional but recommended)
+DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN"
+# Get from: Discord Server → Settings → Integrations → Webhooks → New Webhook
+# Sends real-time notifications when users submit the contact form
+
+# Site URL (Required for SEO)
+NEXT_PUBLIC_SITE_URL="https://yourdomain.com"
+# For local dev: http://localhost:3000
+# For production: Your actual domain (used in sitemap.xml and robots.txt)
+```
+
+### Alternative: Appwrite Backend (Instead of Supabase)
+
+If using Appwrite instead of Supabase for authentication and storage:
+
+```bash
+# Appwrite Configuration
+NEXT_PUBLIC_APPWRITE_ENDPOINT="https://cloud.appwrite.io/v1"
+# For Appwrite Cloud: https://cloud.appwrite.io/v1
+# For Self-hosted: https://your-appwrite-domain.com/v1
+
+NEXT_PUBLIC_APPWRITE_PROJECT_ID="your-project-id"
+# Get from: Appwrite Console → Project Settings → Project ID
+
+APPWRITE_API_KEY="your-api-key"
+# Get from: Appwrite Console → Project Settings → API Keys → Create API Key
+# Scopes needed: sessions.write, users.read, storage.write
+
+# Database (Still use PostgreSQL with Appwrite)
+DATABASE_URL="postgresql://user:password@host:5432/database"
+# Appwrite's database uses NoSQL collections - keep PostgreSQL for relational data
+
+# Optional
+DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+NEXT_PUBLIC_SITE_URL="https://yourdomain.com"
+```
+
+**Note**: When using Appwrite, you'll need to modify the authentication logic in `src/lib/auth-client.ts`, `src/proxy.ts`, and storage logic. See the [Appwrite Integration](#appwrite-integration) section for detailed migration steps.
+
+### Environment Variable Purposes
+
+| Variable | Purpose | Visibility | Required |
+|----------|---------|------------|----------|
+| `DATABASE_URL` | PostgreSQL connection string | Server-only | ✅ Yes |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Client & Server | ✅ Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public API key | Client & Server | ✅ Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase admin key (bypass RLS) | Server-only | ✅ Yes |
+| `SUPABASE_STORAGE_BUCKET` | File storage bucket name | Server-only | ✅ Yes |
+| `DISCORD_WEBHOOK_URL` | Discord notifications endpoint | Server-only | ⚠️ Optional |
+| `NEXT_PUBLIC_SITE_URL` | Your domain for SEO | Client & Server | ⚠️ Optional |
+
+### Setting Up Variables
+
+#### Local Development
+
+Create `.env.local` in the `frontend/` directory:
+
+```bash
+cd frontend
+cp .env.local.example .env.local
+# Edit .env.local with your values
+```
+
+#### Production (Vercel, Railway, etc.)
+
+Add environment variables through your platform's dashboard:
+- **Vercel**: Settings → Environment Variables
+- **Railway**: Variables tab
+- **Render**: Environment → Environment Variables
+- **AWS/Docker**: Use secrets management or `.env` file
+
+### Getting Supabase Credentials
+
+1. **Create a Supabase project**: https://supabase.com/dashboard
+2. **Get your credentials**:
+   - Go to Settings → API
+   - Copy Project URL → `NEXT_PUBLIC_SUPABASE_URL`
+   - Copy anon public key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - Copy service_role key → `SUPABASE_SERVICE_ROLE_KEY`
+
+3. **Set up Database**:
+   - Supabase automatically provides PostgreSQL
+   - Get connection string from Settings → Database
+   - **For serverless (Vercel/Railway)**: Use "Connection Pooling" URL (port 6543)
+   - **For local/VPS**: Use "Direct Connection" URL (port 5432)
+
+4. **Create Storage Bucket**:
+   - Go to Storage → New Bucket
+   - Name: `documents_bucket`
+   - Set to Public or Private based on your needs
+   - Copy bucket name → `SUPABASE_STORAGE_BUCKET`
+
+### Security Notes
+
+⚠️ **Never commit these files**:
+- `.env`
+- `.env.local`
+- `.env.production`
+
+✅ **Safe to commit**:
+- `.env.example` (template without actual values)
+- `.env.local.example` (template without actual values)
+
+🔒 **Keep secret** (server-only):
+- `SUPABASE_SERVICE_ROLE_KEY` - Bypasses Row Level Security
+- `DATABASE_URL` - Contains database password
+- `DISCORD_WEBHOOK_URL` - Can be used to spam your Discord
+
+✅ **Safe to expose** (public):
+- `NEXT_PUBLIC_SUPABASE_URL` - Public project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Limited by RLS policies
+- `NEXT_PUBLIC_SITE_URL` - Your public domain
 
 ## Project Structure
 
@@ -489,6 +620,341 @@ After deployment:
 2. Update DNS records with your registrar
 3. SSL certificate auto-provisioned
 4. Update `NEXT_PUBLIC_SITE_URL` environment variable
+
+### Alternative Deployment Options
+
+While Vercel is recommended for its seamless Next.js integration, this portfolio can be deployed to other platforms:
+
+#### Railway (Recommended Alternative)
+
+Railway provides excellent PostgreSQL and Next.js support with automatic deployments:
+
+1. **Create Railway Project**
+   - Connect your GitHub repository
+   - Railway auto-detects Next.js
+
+2. **Add PostgreSQL Database**
+   - Click "New" → "Database" → "PostgreSQL"
+   - Railway provides `DATABASE_URL` automatically
+
+3. **Configure Environment Variables**
+   ```bash
+   # Railway provides DATABASE_URL automatically
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   SUPABASE_STORAGE_BUCKET=documents_bucket
+   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+   NEXT_PUBLIC_SITE_URL=https://your-app.railway.app
+   ```
+
+4. **Set Root Directory**
+   - Settings → Set `Root Directory` to `frontend`
+
+5. **Deploy**
+   - Railway auto-builds and deploys on every commit
+   - Get your app URL from the deployment
+   - Run migrations: Railway CLI or connect via Prisma Studio
+
+**Note**: Railway requires **connection pooling** for PostgreSQL. If using external database (Supabase), use the pooling URL with port 6543.
+
+#### Render
+
+1. **Create New Web Service**
+   - Connect repository
+   - Root Directory: `frontend`
+   - Build Command: `npm install && npm run build`
+   - Start Command: `npm start`
+
+2. **Add PostgreSQL Database** (optional)
+   - Create PostgreSQL database in Render
+   - Or use external database (Supabase)
+
+3. **Set Environment Variables** (same as above)
+
+4. **Deploy** - Render auto-deploys from your branch
+
+#### Docker / Self-Hosted
+
+For VPS, AWS EC2, DigitalOcean, etc.:
+
+1. **Create `Dockerfile` in `frontend/` directory**:
+   ```dockerfile
+   FROM node:20-alpine AS base
+
+   # Install dependencies only when needed
+   FROM base AS deps
+   WORKDIR /app
+
+   COPY package*.json ./
+   RUN npm ci
+
+   # Rebuild the source code only when needed
+   FROM base AS builder
+   WORKDIR /app
+   COPY --from=deps /app/node_modules ./node_modules
+   COPY . .
+
+   # Generate Prisma Client
+   RUN npx prisma generate
+
+   # Build Next.js
+   ENV NEXT_TELEMETRY_DISABLED 1
+   RUN npm run build
+
+   # Production image
+   FROM base AS runner
+   WORKDIR /app
+
+   ENV NODE_ENV production
+   ENV NEXT_TELEMETRY_DISABLED 1
+
+   RUN addgroup --system --gid 1001 nodejs
+   RUN adduser --system --uid 1001 nextjs
+
+   COPY --from=builder /app/public ./public
+   COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+   COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+   USER nextjs
+
+   EXPOSE 3000
+
+   ENV PORT 3000
+   ENV HOSTNAME "0.0.0.0"
+
+   CMD ["node", "server.js"]
+   ```
+
+2. **Update `next.config.js`**:
+   ```javascript
+   /** @type {import('next').NextConfig} */
+   const nextConfig = {
+     output: 'standalone',
+     // ... rest of config
+   }
+
+   module.exports = nextConfig
+   ```
+
+3. **Build and Run**:
+   ```bash
+   # Build image
+   docker build -t portfolio-app .
+
+   # Run container
+   docker run -p 3000:3000 \
+     -e DATABASE_URL="postgresql://..." \
+     -e NEXT_PUBLIC_SUPABASE_URL="https://..." \
+     -e NEXT_PUBLIC_SUPABASE_ANON_KEY="..." \
+     -e SUPABASE_SERVICE_ROLE_KEY="..." \
+     -e SUPABASE_STORAGE_BUCKET="documents_bucket" \
+     -e NEXT_PUBLIC_SITE_URL="https://yourdomain.com" \
+     portfolio-app
+   ```
+
+4. **Or use Docker Compose**:
+   ```yaml
+   # docker-compose.yml
+   version: '3.8'
+
+   services:
+     app:
+       build:
+         context: ./frontend
+         dockerfile: Dockerfile
+       ports:
+         - "3000:3000"
+       environment:
+         - DATABASE_URL=${DATABASE_URL}
+         - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+         - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+         - SUPABASE_STORAGE_BUCKET=${SUPABASE_STORAGE_BUCKET}
+         - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+       depends_on:
+         - db
+
+     db:
+       image: postgres:15-alpine
+       environment:
+         - POSTGRES_USER=postgres
+         - POSTGRES_PASSWORD=postgres
+         - POSTGRES_DB=portfolio
+       volumes:
+         - postgres_data:/var/lib/postgresql/data
+       ports:
+         - "5432:5432"
+
+   volumes:
+     postgres_data:
+   ```
+
+   Run with: `docker-compose up -d`
+
+#### Appwrite Integration
+
+**Note**: This portfolio currently uses Supabase for authentication and storage. If you want to use Appwrite instead, you'll need to modify the authentication and storage logic. Here's how:
+
+##### Option 1: Appwrite Cloud (Backend Only)
+
+Appwrite Cloud provides authentication and storage but doesn't host Next.js apps. You can:
+1. Use Appwrite for auth/storage
+2. Host Next.js on Vercel/Railway/Render
+3. Keep PostgreSQL for your database (Appwrite's database uses collections, not relational tables)
+
+**Required Changes**:
+
+1. **Install Appwrite SDK**:
+   ```bash
+   npm install appwrite
+   ```
+
+2. **Replace Supabase Client** (`src/lib/appwrite.ts`):
+   ```typescript
+   import { Client, Account, Storage } from 'appwrite';
+
+   const client = new Client()
+     .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!) // 'https://cloud.appwrite.io/v1'
+     .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+
+   export const account = new Account(client);
+   export const storage = new Storage(client);
+   ```
+
+3. **Environment Variables**:
+   ```bash
+   # Appwrite Configuration
+   NEXT_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+   NEXT_PUBLIC_APPWRITE_PROJECT_ID=your-project-id
+   APPWRITE_API_KEY=your-api-key
+
+   # Keep PostgreSQL for database
+   DATABASE_URL=postgresql://user:password@host:5432/database
+
+   # Optional
+   DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+   NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+   ```
+
+4. **Update Authentication** (`src/lib/auth-client.ts` and `src/proxy.ts`):
+   - Replace Supabase auth calls with Appwrite's `account.createSession()`
+   - Update middleware to verify Appwrite sessions
+   - Modify login/signup pages to use Appwrite SDK
+
+5. **Update File Storage**:
+   - Replace Supabase Storage with Appwrite Storage
+   - Update upload endpoints to use `storage.createFile()`
+
+**Deployment with Appwrite**:
+- **Frontend**: Deploy to Vercel/Railway/Render (see deployment options above)
+- **Auth & Storage**: Managed by Appwrite Cloud
+- **Database**: Keep PostgreSQL on Supabase or Railway
+
+##### Option 2: Self-Hosted Appwrite
+
+For full control, self-host Appwrite on your own infrastructure:
+
+1. **Install Appwrite** (requires Docker):
+   ```bash
+   docker run -it --rm \
+     --volume /var/run/docker.sock:/var/run/docker.sock \
+     --volume "$(pwd)"/appwrite:/usr/src/code/appwrite:rw \
+     --entrypoint="install" \
+     appwrite/appwrite:1.5.7
+   ```
+
+2. **Configure Appwrite**:
+   - Access Appwrite Console at `http://localhost:80`
+   - Create project and get credentials
+   - Set up authentication providers (Email/Password)
+   - Create storage buckets
+   - Configure OAuth providers if needed
+
+3. **Deploy Appwrite**:
+   - **VPS/Cloud**: Run on AWS EC2, DigitalOcean Droplet, etc.
+   - **Docker Compose**: Manages all Appwrite services
+   - **Requires**: Docker, Docker Compose, 2GB+ RAM
+
+4. **Update Environment Variables**:
+   ```bash
+   NEXT_PUBLIC_APPWRITE_ENDPOINT=https://your-appwrite-domain.com/v1
+   NEXT_PUBLIC_APPWRITE_PROJECT_ID=your-project-id
+   APPWRITE_API_KEY=your-api-key
+   ```
+
+##### Appwrite vs. Supabase Comparison
+
+| Feature | Supabase (Current) | Appwrite Alternative |
+|---------|-------------------|---------------------|
+| **Auth** | Built-in JWT | Email, OAuth, Magic Links |
+| **Storage** | S3-compatible | Built-in file storage |
+| **Database** | PostgreSQL (relational) | Collections (NoSQL) or keep PostgreSQL |
+| **Realtime** | PostgreSQL subscriptions | WebSocket subscriptions |
+| **Functions** | Edge Functions | Cloud Functions |
+| **Hosting** | None (use Vercel) | None (use Vercel/Railway) |
+| **Free Tier** | 500MB DB, 1GB storage | 75K users, 2GB storage |
+| **Open Source** | Yes | Yes |
+
+##### Migration Effort
+
+**Low effort** (Keep PostgreSQL, use Appwrite for auth only):
+- ✅ 2-3 hours for auth migration
+- ✅ Keep all database logic unchanged
+- ✅ Keep Prisma ORM
+- ⚠️ Need to update auth middleware and login pages
+
+**High effort** (Full migration to Appwrite):
+- ❌ Rewrite all database logic (Prisma → Appwrite SDK)
+- ❌ Convert relational schema to collections
+- ❌ Rewrite queries and relationships
+- ❌ 2-3 days of development
+- ⚠️ Not recommended for this project
+
+**Recommended**: Use Appwrite for auth/storage + keep PostgreSQL for data.
+
+#### AWS / Azure / Google Cloud
+
+For enterprise deployments:
+
+1. **AWS Elastic Beanstalk** or **ECS**:
+   - Use Docker deployment (see above)
+   - Connect to RDS PostgreSQL
+   - Set environment variables in console
+   - Configure load balancer for HTTPS
+
+2. **Azure App Service**:
+   - Deploy from GitHub
+   - Use Azure Database for PostgreSQL
+   - Configure app settings for env vars
+
+3. **Google Cloud Run**:
+   - Build container image
+   - Push to Google Container Registry
+   - Deploy with Cloud SQL PostgreSQL
+   - Set environment variables
+
+### Database Considerations for Different Platforms
+
+| Platform | Database Option | Connection Type | Notes |
+|----------|----------------|-----------------|-------|
+| **Vercel** | Supabase/Neon/Planetscale | Connection Pooling (6543) | Serverless requires pooling |
+| **Railway** | Railway PostgreSQL | Direct or Pooling | Both work, pooling recommended |
+| **Render** | Render PostgreSQL | Direct Connection (5432) | Not serverless, direct works |
+| **Docker/VPS** | Self-hosted or Supabase | Direct Connection (5432) | Long-running process, direct connection |
+| **AWS Lambda** | RDS/Aurora | Connection Pooling | Serverless, use RDS Proxy |
+
+### When to Use Connection Pooling vs Direct Connection
+
+**Use Connection Pooling (port 6543)** when:
+- ✅ Deploying to serverless platforms (Vercel, AWS Lambda)
+- ✅ Application creates many short-lived connections
+- ✅ Need to limit database connections
+
+**Use Direct Connection (port 5432)** when:
+- ✅ Running on traditional servers (VPS, Docker)
+- ✅ Long-running Node.js process
+- ✅ Need better performance (pooling adds latency)
 
 ## Development
 
