@@ -15,17 +15,14 @@ export default function ProfilePage() {
     phone: '+250798287701',
     location: 'Kigali, RWA',
     resumeUrl: '',
+    availableForWork: true,
 
+    // Social Links
     githubUrl: '',
     linkedinUrl: '',
     twitterUrl: '',
     websiteUrl: '',
-    
-    // Hero Section
-    heroTitle: 'AI Engineer & Software Developer',
-    heroSubtitle: 'Building intelligent systems and scalable software solutions. Specialized in machine learning, artificial intelligence, and modern web technologies.',
-    availableForWork: true,
-    
+
     // Profile Image
     profileImageUrl: '/images/profile.png',
   })
@@ -43,8 +40,29 @@ export default function ProfilePage() {
     try {
       const response = await fetch('/api/profile')
       if (response.ok) {
-        const data = await response.json()
-        setProfileData(data)
+        const result = await response.json()
+        // API returns data wrapped in a 'data' object
+        const data = result.data || result
+        console.log('Loaded profile data:', data)
+        // Ensure all fields have default values to prevent controlled/uncontrolled input warnings
+        setProfileData({
+          name: data.name || '',
+          title: data.title || '',
+          bio: data.bio || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          location: data.location || '',
+          resumeUrl: data.resumeUrl || '',
+          availableForWork: data.availableForWork ?? true,
+          githubUrl: data.githubUrl || '',
+          linkedinUrl: data.linkedinUrl || '',
+          twitterUrl: data.twitterUrl || '',
+          websiteUrl: data.websiteUrl || '',
+          profileImageUrl: data.profileImageUrl || '/images/profile.png',
+        })
+        console.log('Profile data set successfully')
+      } else {
+        console.error('Failed to load profile, status:', response.status)
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -61,14 +79,32 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setIsSaving(true)
     setMessage('')
-    
+
     try {
+      // Auto-sync heroTitle with title and heroSubtitle with bio
+      // These fields are required by the API but not separately editable in the form
+      // Convert empty strings to null for optional URL fields
+      const dataToSave = {
+        ...profileData,
+        heroTitle: profileData.title,
+        heroSubtitle: profileData.bio || profileData.title,
+        // Convert empty strings to null for proper conditional rendering
+        githubUrl: profileData.githubUrl || null,
+        linkedinUrl: profileData.linkedinUrl || null,
+        twitterUrl: profileData.twitterUrl || null,
+        websiteUrl: profileData.websiteUrl || null,
+        resumeUrl: profileData.resumeUrl || null,
+        phone: profileData.phone || null,
+        location: profileData.location || null,
+        bio: profileData.bio || null,
+      }
+
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(profileData),
+        body: JSON.stringify(dataToSave),
       })
 
       if (response.ok) {
